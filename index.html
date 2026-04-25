@@ -89,7 +89,7 @@
     <hr>
     <h4>添加商品到当前订单</h4>
     <div class="row">
-      <div class="col"><label>商品名称</label><input type="text" id="itemProduct" list="productList" autocomplete="off" placeholder="选择或输入"></div>
+      <div class="col"><label>商品名称</label><input type="text" id="itemProduct" list="productList" autocomplete="off" placeholder="输入或选择历史商品"></div>
       <datalist id="productList"></datalist>
       <div class="col"><label>数量</label><input type="number" id="itemQty" value="1" min="1"></div>
       <div class="col"><label>进价 (元/件)</label><input type="number" id="itemPrice" step="0.01" placeholder="单价"></div>
@@ -112,11 +112,10 @@
     </table>
   </div>
 
-  <!-- 签收登记 -->
+  <!-- 签收登记（无筛选，直接全部） -->
   <div id="tab-receive" class="panel">
-    <div class="row">
-      <div class="col"><label>筛选账号</label><select id="receiveAccountFilter"><option value="all">全部</option></select></div>
-      <div><button class="secondary" onclick="renderPendingOrders()">刷新</button></div>
+    <div class="row" style="justify-content: flex-end;">
+      <button class="secondary" onclick="renderPendingOrders()">刷新</button>
     </div>
     <table id="pendingTable">
       <thead><tr><th>账号</th><th>订单号</th><th>商品数</th><th>订购总数</th><th>已签收数</th><th>未签收数</th><th>下单日期</th><th>操作</th></tr></thead>
@@ -164,11 +163,10 @@
     </table>
   </div>
 
-  <!-- 库存总览 -->
+  <!-- 库存总览（默认全部） -->
   <div id="tab-stock" class="panel">
-    <div class="row">
-      <div class="col"><label>账号</label><select id="stockAccountFilter"><option value="all">全部</option></select></div>
-      <div><button class="secondary" onclick="renderStock()">刷新</button></div>
+    <div class="row" style="justify-content: flex-end;">
+      <button class="secondary" onclick="renderStock()">刷新</button>
     </div>
     <table id="stockTable">
       <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本</th><th>签收日</th></tr></thead>
@@ -194,7 +192,7 @@
 </div>
 
 <script>
-  // ⚠️ 数据存储键名，以后修改代码时不要改动这个名字，数据就不会丢！
+  // ⚠️ 数据存储键名固定，永远不改，保你数据安全
   const STORAGE_KEY = 'JD_INVENTORY_V6';
 
   let data = {
@@ -273,15 +271,17 @@
   }
 
   function refreshSelects() {
-    ['orderAccount','stockAccountFilter','profitAccount','receiveAccountFilter'].forEach(id => {
-      const sel = document.getElementById(id);
-      if(!sel) return;
-      const cur = sel.value;
-      sel.innerHTML = '';
-      if(id.includes('filter') || id.includes('profitAccount')) sel.innerHTML = '<option value="all">全部</option>';
-      data.accounts.forEach(a => sel.innerHTML += `<option value="${a}">${a}</option>`);
-      if(cur && [...sel.options].some(o=>o.value===cur)) sel.value = cur;
-    });
+    const orderAccount = document.getElementById('orderAccount');
+    if(orderAccount) {
+      orderAccount.innerHTML = '';
+      data.accounts.forEach(a => orderAccount.innerHTML += `<option value="${a}">${a}</option>`);
+    }
+    // 利润报表的账号下拉还在，需要保留
+    const profitAccount = document.getElementById('profitAccount');
+    if(profitAccount) {
+      profitAccount.innerHTML = '<option value="all">全部</option>';
+      data.accounts.forEach(a => profitAccount.innerHTML += `<option value="${a}">${a}</option>`);
+    }
   }
 
   function genId() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
@@ -369,7 +369,7 @@
     clearCart();
     document.getElementById('orderNo').value = '';
     document.getElementById('orderRemark').value = '';
-    updateAllDatalists();
+    updateAllDatalists();   // 更新记忆列表，让你下次能选
     renderOrderList();
     alert('采购单已保存！');
   }
@@ -397,7 +397,7 @@
     }).join('');
   }
 
-  // ---- 签收登记 ----
+  // ---- 签收登记（不再选账号，直接显示全部） ----
   function getPendingGroups() {
     const groups = {};
     data.orders.forEach(o => {
@@ -433,9 +433,7 @@
     alert('该订单下所有商品已签收！');
   }
   function renderPendingOrders() {
-    const filter = document.getElementById('receiveAccountFilter')?.value || 'all';
-    let groups = getPendingGroups();
-    if(filter !== 'all') groups = groups.filter(g => g.account === filter);
+    const groups = getPendingGroups();
     const tbody = document.querySelector('#pendingTable tbody');
     if(groups.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty">🎉 所有商品均已签收</td></tr>';
@@ -573,11 +571,9 @@
       <tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note || ''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
   }
 
-  // ---- 库存 ----
+  // ---- 库存（默认全部，无筛选） ----
   function renderStock() {
-    const filter = document.getElementById('stockAccountFilter').value;
-    let list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
-    if(filter !== 'all') list = list.filter(o => o.account === filter);
+    const list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
     const tbody = document.querySelector('#stockTable tbody');
     let totalCost = 0;
     if(list.length===0) {
@@ -648,7 +644,6 @@
   document.getElementById('saleQty').addEventListener('input', updateSalePreview);
   document.getElementById('salePrice').addEventListener('input', updateSalePreview);
   document.getElementById('orderSearch')?.addEventListener('input', renderOrderList);
-  document.getElementById('receiveAccountFilter')?.addEventListener('change', renderPendingOrders);
 
   // 初始化
   loadData();
