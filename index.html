@@ -52,7 +52,7 @@
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
-  <p style="color:#666; margin-bottom: 8px;">个人版 · 混合采购+一键签收 | 快递费按日期</p>
+  <p style="color:#666; margin-bottom: 8px;">个人版 · 混合采购 + 一键签收 | 快递费按日期</p>
 
   <div class="tabs">
     <div class="tab active" data-tab="tab-accounts">👤 账号</div>
@@ -76,7 +76,7 @@
     </table>
   </div>
 
-  <!-- 采购录入（支持多商品） -->
+  <!-- 采购录入 -->
   <div id="tab-purchase-order" class="panel">
     <div class="row">
       <div class="col"><label>账号</label><select id="orderAccount"></select></div>
@@ -112,7 +112,7 @@
     </table>
   </div>
 
-  <!-- 签收登记（按订单号分组一键签收） -->
+  <!-- 签收登记 -->
   <div id="tab-receive" class="panel">
     <div class="row">
       <div class="col"><label>筛选账号</label><select id="receiveAccountFilter"><option value="all">全部</option></select></div>
@@ -125,7 +125,7 @@
     <p style="color:#666; margin-top:12px;">💡 一键签收该订单下的所有商品，进价沿用采购时价格，日期为今天。</p>
   </div>
 
-  <!-- 销售出库（不变） -->
+  <!-- 销售出库 -->
   <div id="tab-sale" class="panel">
     <div class="row">
       <div class="col"><label>商品名称</label><input type="text" id="saleProduct" list="saleProductList" autocomplete="off" placeholder="选择或输入商品"></div>
@@ -149,7 +149,7 @@
     </table>
   </div>
 
-  <!-- 快递费（不变） -->
+  <!-- 快递费 -->
   <div id="tab-shipping" class="panel">
     <div class="row">
       <div class="col"><label>日期</label><input type="date" id="shippingDate"></div>
@@ -164,7 +164,7 @@
     </table>
   </div>
 
-  <!-- 库存总览（增加总成本合计） -->
+  <!-- 库存总览 -->
   <div id="tab-stock" class="panel">
     <div class="row">
       <div class="col"><label>账号</label><select id="stockAccountFilter"><option value="all">全部</option></select></div>
@@ -177,7 +177,7 @@
     <div id="stockTotalCost" style="margin-top: 12px; font-weight: 600;"></div>
   </div>
 
-  <!-- 利润报表（不变） -->
+  <!-- 利润报表 -->
   <div id="tab-profit" class="panel">
     <div class="row">
       <div class="col"><label>账号</label><select id="profitAccount"><option value="all">全部</option></select></div>
@@ -194,7 +194,9 @@
 </div>
 
 <script>
-  const STORAGE_KEY = 'JD_INVENTORY_MULTI';
+  // ⚠️ 数据存储键名，以后修改代码时不要改动这个名字，数据就不会丢！
+  const STORAGE_KEY = 'JD_INVENTORY_V6';
+
   let data = {
     accounts: ['京东账号A', '京东账号B', '京东账号C', '京东账号D', '京东账号E', '京东账号F', '京东账号G'],
     orders: [],
@@ -202,7 +204,6 @@
     shippingFees: []
   };
 
-  // 当前采购单的商品暂存列表
   let currentCart = [];
 
   function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -314,12 +315,8 @@
     document.querySelector('#accountTable tbody').innerHTML = data.accounts.map(a => `<tr><td>${a}</td><td><button class="danger" onclick="deleteAccount('${a}')">删除</button></td></tr>`).join('');
   }
 
-  // ---- 采购录入（多商品） ----
-  function clearCart() {
-    currentCart = [];
-    renderCart();
-  }
-
+  // ---- 采购录入 ----
+  function clearCart() { currentCart = []; renderCart(); }
   function addItemToCart() {
     const product = document.getElementById('itemProduct').value.trim();
     const qty = parseInt(document.getElementById('itemQty').value);
@@ -331,12 +328,7 @@
     document.getElementById('itemPrice').value = '';
     renderCart();
   }
-
-  function removeFromCart(index) {
-    currentCart.splice(index, 1);
-    renderCart();
-  }
-
+  function removeFromCart(index) { currentCart.splice(index, 1); renderCart(); }
   function renderCart() {
     const container = document.getElementById('cartItems');
     if (currentCart.length === 0) {
@@ -352,7 +344,6 @@
       </div>
     `).join('');
   }
-
   function saveOrderItems() {
     const account = document.getElementById('orderAccount').value;
     const orderNo = document.getElementById('orderNo').value.trim();
@@ -382,7 +373,6 @@
     renderOrderList();
     alert('采购单已保存！');
   }
-
   function deleteOrder(id) {
     if(!confirm('删除此采购记录？')) return;
     data.orders = data.orders.filter(o => o.id !== id);
@@ -407,7 +397,7 @@
     }).join('');
   }
 
-  // ---- 签收登记（按订单号分组） ----
+  // ---- 签收登记 ----
   function getPendingGroups() {
     const groups = {};
     data.orders.forEach(o => {
@@ -429,7 +419,6 @@
     });
     return Object.values(groups);
   }
-
   function quickReceiveByOrderNo(orderNo) {
     const ordersToUpdate = data.orders.filter(o => o.orderNo === orderNo && o.receivedQty < o.qty);
     if(ordersToUpdate.length === 0) return;
@@ -443,7 +432,6 @@
     renderOrderList();
     alert('该订单下所有商品已签收！');
   }
-
   function renderPendingOrders() {
     const filter = document.getElementById('receiveAccountFilter')?.value || 'all';
     let groups = getPendingGroups();
@@ -463,7 +451,7 @@
     }).join('');
   }
 
-  // ---- 销售（不变） ----
+  // ---- 销售 ----
   function getAvailableStock(productName) {
     return data.orders
       .filter(o => o.product === productName && o.receivedQty > (o.soldQty||0))
@@ -559,7 +547,7 @@
       </tr>`).join('');
   }
 
-  // ---- 快递费（不变） ----
+  // ---- 快递费 ----
   function addShippingFee() {
     const date = document.getElementById('shippingDate').value;
     const amount = parseFloat(document.getElementById('shippingAmount').value);
@@ -585,7 +573,7 @@
       <tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note || ''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
   }
 
-  // ---- 库存（增加合计） ----
+  // ---- 库存 ----
   function renderStock() {
     const filter = document.getElementById('stockAccountFilter').value;
     let list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
@@ -607,7 +595,7 @@
     document.getElementById('stockTotalCost').innerHTML = `<div style="text-align:right; margin-top:8px;">📊 库存总成本：<strong style="font-size:1.2rem;">¥${totalCost.toFixed(2)}</strong></div>`;
   }
 
-  // ---- 利润（不变） ----
+  // ---- 利润 ----
   function renderProfit() {
     const accountFilter = document.getElementById('profitAccount').value;
     const start = document.getElementById('profitStart').value;
