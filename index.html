@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>进销存 · 个人版</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #222; padding: 16px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    h1 { font-size: 1.8rem; }
+    .sync-btns { display: flex; gap: 8px; }
+    .sync-btns button { background: white; border: 1px solid #ccc; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
+    .tab { padding: 10px 18px; background: #f0f0f0; border: 1px solid #ddd; border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+    .tab.active { background: white; color: #2563eb; border-color: #2563eb; font-weight: 600; }
+    .panel { background: white; border: 1px solid #e5e7eb; border-radius: 0 12px 12px 12px; padding: 20px; display: none; }
+    .panel.active { display: block; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; align-items: center; }
+    .col { flex: 1 1 180px; }
+    label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 0.85rem; color: #444; }
+    input, select, button { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; width: 100%; background: white; }
+    button { background: #2563eb; color: white; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; width: auto; padding: 10px 20px; }
+    button:hover { opacity: 0.9; }
+    button.danger { background: #b91c1c; }
+    button.secondary { background: #e5e7eb; color: #333; }
+    button.success { background: #16a34a; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.85rem; }
+    th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    hr { margin: 16px 0; border: 0.5px solid #e5e7eb; }
+    .empty { color: #888; text-align: center; padding: 30px; }
+    .stat-box { background: #f9fafb; border: 1px solid #eee; border-radius: 8px; padding: 14px 18px; display: inline-block; margin-right: 12px; margin-bottom: 12px; min-width: 130px; }
+    .stat-num { font-size: 1.8rem; font-weight: 700; color: #111827; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📦 京东多账号进销存</h1>
+    <div class="sync-btns">
+      <button onclick="exportData()">📤 导出数据</button>
+      <button onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+    </div>
+  </div>
+  <p style="color:#666; margin-bottom: 8px;">个人版 · 先采购录入，再一键签收 | 快递费按日期</p>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="tab-accounts">👤 账号</div>
+    <div class="tab" data-tab="tab-purchase-order">📋 采购录入</div>
+    <div class="tab" data-tab="tab-receive">✅ 签收登记</div>
+    <div class="tab" data-tab="tab-sale">📤 销售出库</div>
+    <div class="tab" data-tab="tab-shipping">🚚 快递费</div>
+    <div class="tab" data-tab="tab-stock">📊 库存</div>
+    <div class="tab" data-tab="tab-profit">💰 利润</div>
+  </div>
+
+  <!-- 账号管理 -->
+  <div id="tab-accounts" class="panel active">
+    <div class="row">
+      <div class="col"><input type="text" id="newAccountName" placeholder="账号名称，例如：京东号A"></div>
+      <div><button onclick="addAccount()">➕ 添加</button></div>
+    </div>
+    <table id="accountTable">
+      <thead><tr><th>账号名称</th><th style="width:80px;"></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- 采购录入 -->
+  <div id="tab-purchase-order" class="panel">
+    <div class="row">
+      <div class="col"><label>账号</label><select id="orderAccount"></select></div>
+      <div class="col"><label>京东订单号/快递单号</label><input type="text" id="orderNo" placeholder="必填"></div>
+      <div class="col"><label>商品名称</label><input type="text" id="orderProduct" list="productList" autocomplete="off" placeholder="输入或选择历史商品"></div>
+      <datalist id="productList"></datalist>
+    </div>
+    <div class="row">
+      <div class="col"><label>数量</label><input type="number" id="orderQty" value="1" min="1"></div>
+      <div class="col"><label>进价 (元/件)</label><input type="number" id="orderPrice" step="0.01" placeholder="签收时不修改则用此价"></div>
+      <div class="col"><label>下单日期</label><input type="date" id="orderDate"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>备注</label><input type="text" id="orderRemark" placeholder="选填"></div>
+      <div><button onclick="addPurchaseOrder()">📝 保存采购单</button></div>
+    </div>
+    <hr>
+    <div class="row">
+      <div class="col"><input type="text" id="orderSearch" placeholder="🔍 搜索订单号或商品"></div>
+      <div><button class="secondary" onclick="renderOrderList()">刷新</button></div>
+    </div>
+    <table id="orderTable">
+      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购</th><th>已签收</th><th>状态</th><th>日期</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- 签收登记（一键签收） -->
+  <div id="tab-receive" class="panel">
+    <div class="row">
+      <div class="col"><label>筛选账号</label><select id="receiveAccountFilter"><option value="all">全部</option></select></div>
+      <div><button class="secondary" onclick="renderPendingOrders()">刷新</button></div>
+    </div>
+    <table id="pendingTable">
+      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购数</th><th>已签收</th><th>未签收</th><th>下单日期</th><th>操作</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p style="color:#666; margin-top:12px;">💡 点击“签收”按钮，自动将剩余数量全部签收，进价沿用采购时价格，日期为今天。</p>
+  </div>
+
+  <!-- 销售出库（按商品，先进先出） -->
+  <div id="tab-sale" class="panel">
+    <div class="row">
+      <div class="col"><label>商品名称</label><input type="text" id="saleProduct" list="saleProductList" autocomplete="off" placeholder="选择或输入商品"></div>
+      <datalist id="saleProductList"></datalist>
+      <div class="col"><label>数量</label><input type="number" id="saleQty" value="1" min="1"></div>
+      <div class="col"><label>售价 (元/件)</label><input type="number" id="salePrice" step="0.01" placeholder="拼多多卖价"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>销售日期</label><input type="date" id="saleDate"></div>
+    </div>
+    <div class="row">
+      <div class="col"><strong>预估商品成本：</strong><span id="costPreview">--</span> 元/件</div>
+      <div class="col"><strong>预估总成本：</strong><span id="totalCostPreview">--</span> 元</div>
+      <div class="col"><strong>预估利润：</strong><span id="estProfit">--</span> 元（未含快递费）</div>
+      <div><button onclick="addSale()">📌 记录销售</button></div>
+    </div>
+    <hr>
+    <table id="saleTable">
+      <thead><tr><th>商品</th><th>数量</th><th>售价</th><th>商品成本</th><th>利润(未扣运费)</th><th>日期</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- 快递费录入（按日期） -->
+  <div id="tab-shipping" class="panel">
+    <div class="row">
+      <div class="col"><label>日期</label><input type="date" id="shippingDate"></div>
+      <div class="col"><label>总快递费 (元)</label><input type="number" id="shippingAmount" step="0.01" placeholder="例如当天或两天合计"></div>
+      <div class="col"><label>备注 (选填)</label><input type="text" id="shippingNote" placeholder="例如：圆通/顺丰"></div>
+      <div><button onclick="addShippingFee()">🚚 记录快递费</button></div>
+    </div>
+    <hr>
+    <table id="shippingTable">
+      <thead><tr><th>日期</th><th>金额</th><th>备注</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p style="color:#666; margin-top:8px;">📌 这里记录的快递费，会在利润报表中自动扣除。</p>
+  </div>
+
+  <!-- 库存总览 -->
+  <div id="tab-stock" class="panel">
+    <div class="row">
+      <div class="col"><label>账号</label><select id="stockAccountFilter"><option value="all">全部</option></select></div>
+      <div><button class="secondary" onclick="renderStock()">刷新</button></div>
+    </div>
+    <table id="stockTable">
+      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本</th><th>签收日</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- 利润报表 -->
+  <div id="tab-profit" class="panel">
+    <div class="row">
+      <div class="col"><label>账号</label><select id="profitAccount"><option value="all">全部</option></select></div>
+      <div class="col"><label>从</label><input type="date" id="profitStart"></div>
+      <div class="col"><label>到</label><input type="date" id="profitEnd"></div>
+      <div><button onclick="renderProfit()">查询</button></div>
+    </div>
+    <div id="profitSummary" style="margin-bottom:12px;"></div>
+    <table id="profitDetailTable">
+      <thead><tr><th>商品</th><th>数量</th><th>销售额</th><th>商品成本</th><th>利润(未扣运费)</th><th>日期</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'JD_INVENTORY_FINAL';
+  let data = {
+    accounts: ['京东账号A', '京东账号B', '京东账号C', '京东账号D', '京东账号E', '京东账号F', '京东账号G'],
+    orders: [],
+    sales: [],
+    shippingFees: []
+  };
+
+  function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  function loadData() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const p = JSON.parse(stored);
+        data.accounts = p.accounts || data.accounts;
+        data.orders = p.orders || [];
+        data.sales = p.sales || [];
+        data.shippingFees = p.shippingFees || [];
+      } catch(e) {}
+    }
+    document.getElementById('orderDate').valueAsDate = new Date();
+    document.getElementById('saleDate').valueAsDate = new Date();
+    document.getElementById('shippingDate').valueAsDate = new Date();
+    updateAllDatalists();
+  }
+
+  // 导入导出
+  function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `进销存_备份_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  function importData(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (imported.accounts && imported.orders && imported.sales && imported.shippingFees) {
+          if (confirm('即将覆盖当前所有数据，确定导入吗？')) {
+            data = imported;
+            saveData();
+            refreshAllUI();
+            alert('导入成功！');
+          }
+        } else {
+          alert('文件格式不正确');
+        }
+      } catch(err) {
+        alert('解析失败，请检查文件');
+      }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
+  function refreshAllUI() {
+    refreshSelects();
+    renderAccounts();
+    renderOrderList();
+    renderPendingOrders();
+    renderSaleList();
+    renderShippingFees();
+    renderStock();
+    updateAllDatalists();
+    updateSalePreview();
+  }
+
+  function refreshSelects() {
+    ['orderAccount','stockAccountFilter','profitAccount','receiveAccountFilter'].forEach(id => {
+      const sel = document.getElementById(id);
+      if(!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = '';
+      if(id.includes('filter') || id.includes('profitAccount')) sel.innerHTML = '<option value="all">全部</option>';
+      data.accounts.forEach(a => sel.innerHTML += `<option value="${a}">${a}</option>`);
+      if(cur && [...sel.options].some(o=>o.value===cur)) sel.value = cur;
+    });
+  }
+
+  function genId() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
+
+  function updateAllDatalists() {
+    const products = [...new Set(data.orders.map(o => o.product))];
+    const html = products.map(p => `<option value="${p}">`).join('');
+    document.getElementById('productList').innerHTML = html;
+    document.getElementById('saleProductList').innerHTML = html;
+  }
+
+  // ---- 账号 ----
+  function addAccount() {
+    const name = document.getElementById('newAccountName').value.trim();
+    if(!name) return alert('请输入名称');
+    if(data.accounts.includes(name)) return alert('已存在');
+    data.accounts.push(name);
+    saveData();
+    document.getElementById('newAccountName').value = '';
+    refreshSelects();
+    renderAccounts();
+  }
+  function deleteAccount(name) {
+    if(!confirm(`确定删除“${name}”吗？`)) return;
+    data.accounts = data.accounts.filter(a => a !== name);
+    saveData();
+    refreshSelects();
+    renderAccounts();
+  }
+  function renderAccounts() {
+    document.querySelector('#accountTable tbody').innerHTML = data.accounts.map(a => `<tr><td>${a}</td><td><button class="danger" onclick="deleteAccount('${a}')">删除</button></td></tr>`).join('');
+  }
+
+  // ---- 采购录入 ----
+  function addPurchaseOrder() {
+    const account = document.getElementById('orderAccount').value;
+    const orderNo = document.getElementById('orderNo').value.trim();
+    const product = document.getElementById('orderProduct').value.trim();
+    const qty = parseInt(document.getElementById('orderQty').value);
+    const price = parseFloat(document.getElementById('orderPrice').value) || 0;
+    const date = document.getElementById('orderDate').value;
+    if(!account||!orderNo||!product||!qty||!date) return alert('请完整填写');
+    const order = {
+      id: genId(),
+      account, orderNo, product, qty,
+      unitPrice: price, date,
+      remark: document.getElementById('orderRemark').value.trim(),
+      receivedQty: 0, soldQty: 0, status: 'pending'
+    };
+    data.orders.push(order);
+    saveData();
+    document.getElementById('orderNo').value = '';
+    document.getElementById('orderProduct').value = '';
+    document.getElementById('orderQty').value = 1;
+    document.getElementById('orderPrice').value = '';
+    document.getElementById('orderRemark').value = '';
+    updateAllDatalists();
+    renderOrderList();
+  }
+  function deleteOrder(id) {
+    if(!confirm('删除采购单？')) return;
+    data.orders = data.orders.filter(o => o.id !== id);
+    data.sales = data.sales.filter(s => !s.batches?.some(b => b.orderId === id));
+    saveData();
+    updateAllDatalists();
+    renderOrderList();
+    renderPendingOrders();
+  }
+  function renderOrderList() {
+    const search = (document.getElementById('orderSearch')?.value || '').toLowerCase();
+    let list = data.orders;
+    if(search) list = list.filter(o => o.orderNo.toLowerCase().includes(search) || o.product.toLowerCase().includes(search));
+    const tbody = document.querySelector('#orderTable tbody');
+    if(list.length===0) { tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无采购单</td></tr>'; return; }
+    tbody.innerHTML = list.map(o => {
+      const badge = o.status==='received' ? '<span class="badge badge-success">已签收</span>' : '<span class="badge badge-warning">待签收</span>';
+      return `<tr>
+        <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td>
+        <td>${badge}</td><td>${o.date}</td>
+        <td><button class="danger" onclick="deleteOrder('${o.id}')">删除</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---- 一键签收 ----
+  function quickReceive(orderId) {
+    const order = data.orders.find(o => o.id === orderId);
+    if(!order) return;
+    const left = order.qty - order.receivedQty;
+    if(left <= 0) return;
+    order.receivedQty = order.qty;
+    order.status = 'received';
+    order.receiveDate = new Date().toISOString().split('T')[0];
+    if(order.soldQty === undefined) order.soldQty = 0;
+    saveData();
+    renderPendingOrders();
+    renderOrderList();
+  }
+  function renderPendingOrders() {
+    const filter = document.getElementById('receiveAccountFilter')?.value || 'all';
+    let pending = data.orders.filter(o => o.receivedQty < o.qty);
+    if(filter !== 'all') pending = pending.filter(o => o.account === filter);
+    const tbody = document.querySelector('#pendingTable tbody');
+    if(pending.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">🎉 所有商品均已签收</td></tr>';
+      return;
+    }
+    tbody.innerHTML = pending.map(o => {
+      const left = o.qty - o.receivedQty;
+      return `<tr>
+        <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td>
+        <td><strong>${left}</strong></td><td>${o.date}</td>
+        <td><button class="success" onclick="quickReceive('${o.id}')">📦 签收</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ---- 销售出库 ----
+  function getAvailableStock(productName) {
+    return data.orders
+      .filter(o => o.product === productName && o.receivedQty > (o.soldQty||0))
+      .sort((a,b) => (a.receiveDate||a.date).localeCompare(b.receiveDate||b.date));
+  }
+  function updateSalePreview() {
+    const product = document.getElementById('saleProduct').value.trim();
+    const qty = parseInt(document.getElementById('saleQty').value) || 0;
+    const price = parseFloat(document.getElementById('salePrice').value) || 0;
+    if (!product || qty <= 0) {
+      document.getElementById('costPreview').innerText = '--';
+      document.getElementById('totalCostPreview').innerText = '--';
+      document.getElementById('estProfit').innerText = '--';
+      return;
+    }
+    const stock = getAvailableStock(product);
+    let remaining = qty, totalCost = 0;
+    for (let order of stock) {
+      const avail = order.receivedQty - (order.soldQty||0);
+      const take = Math.min(remaining, avail);
+      totalCost += take * order.unitPrice;
+      remaining -= take;
+      if (remaining === 0) break;
+    }
+    if (remaining > 0) {
+      document.getElementById('costPreview').innerText = '库存不足';
+      document.getElementById('totalCostPreview').innerText = '--';
+      document.getElementById('estProfit').innerText = '--';
+      return;
+    }
+    const unitAvg = totalCost / qty;
+    const profit = price * qty - totalCost;
+    document.getElementById('costPreview').innerText = unitAvg.toFixed(2);
+    document.getElementById('totalCostPreview').innerText = totalCost.toFixed(2);
+    document.getElementById('estProfit').innerText = profit.toFixed(2);
+  }
+  function addSale() {
+    const product = document.getElementById('saleProduct').value.trim();
+    const qty = parseInt(document.getElementById('saleQty').value);
+    const price = parseFloat(document.getElementById('salePrice').value);
+    const saleDate = document.getElementById('saleDate').value;
+    if(!product || !qty || isNaN(price) || !saleDate) return alert('请完整填写');
+    const stock = getAvailableStock(product);
+    let remaining = qty, totalCost = 0;
+    const batches = [];
+    for (let order of stock) {
+      const avail = order.receivedQty - (order.soldQty||0);
+      const take = Math.min(remaining, avail);
+      totalCost += take * order.unitPrice;
+      batches.push({ orderId: order.id, qty: take, unitCost: order.unitPrice });
+      remaining -= take;
+      if (remaining === 0) break;
+    }
+    if (remaining > 0) {
+      const totalAvail = stock.reduce((s,o) => s + (o.receivedQty - (o.soldQty||0)), 0);
+      return alert(`库存不足，剩余 ${totalAvail} 件`);
+    }
+    const profit = price * qty - totalCost;
+    const sale = { id: genId(), product, qty, salePrice: price, totalCost, profit, saleDate, batches };
+    for (let b of batches) {
+      const order = data.orders.find(o => o.id === b.orderId);
+      if (order) order.soldQty = (order.soldQty||0) + b.qty;
+    }
+    data.sales.push(sale);
+    saveData();
+    document.getElementById('saleQty').value = 1;
+    document.getElementById('salePrice').value = '';
+    renderSaleList();
+    updateAllDatalists();
+    updateSalePreview();
+  }
+  function deleteSale(id) {
+    if(!confirm('删除此销售记录将恢复库存，确定吗？')) return;
+    const sale = data.sales.find(s => s.id === id);
+    if(sale && sale.batches) {
+      for (let b of sale.batches) {
+        const order = data.orders.find(o => o.id === b.orderId);
+        if(order) order.soldQty = Math.max(0, (order.soldQty||0) - b.qty);
+      }
+    }
+    data.sales = data.sales.filter(s => s.id !== id);
+    saveData();
+    renderSaleList();
+  }
+  function renderSaleList() {
+    const tbody = document.querySelector('#saleTable tbody');
+    if(data.sales.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无销售记录</td></tr>'; return; }
+    tbody.innerHTML = data.sales.map(s => `
+      <tr>
+        <td>${s.product}</td><td>${s.qty}</td><td>¥${s.salePrice.toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td>
+        <td style="color:${s.profit>=0?'#16a34a':'#b91c1c'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td>
+        <td><button class="danger" onclick="deleteSale('${s.id}')">删除</button></td>
+      </tr>`).join('');
+  }
+
+  // ---- 快递费 ----
+  function addShippingFee() {
+    const date = document.getElementById('shippingDate').value;
+    const amount = parseFloat(document.getElementById('shippingAmount').value);
+    const note = document.getElementById('shippingNote').value.trim();
+    if(!date || isNaN(amount) || amount <= 0) return alert('请填写日期和有效金额');
+    data.shippingFees.push({ id: genId(), date, amount, note });
+    saveData();
+    document.getElementById('shippingAmount').value = '';
+    document.getElementById('shippingNote').value = '';
+    renderShippingFees();
+  }
+  function deleteShippingFee(id) {
+    if(!confirm('删除快递费记录？')) return;
+    data.shippingFees = data.shippingFees.filter(f => f.id !== id);
+    saveData();
+    renderShippingFees();
+  }
+  function renderShippingFees() {
+    const tbody = document.querySelector('#shippingTable tbody');
+    if(data.shippingFees.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty">暂无快递费记录</td></tr>'; return; }
+    data.shippingFees.sort((a,b) => a.date.localeCompare(b.date));
+    tbody.innerHTML = data.shippingFees.map(f => `
+      <tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note || ''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
+  }
+
+  // ---- 库存 ----
+  function renderStock() {
+    const filter = document.getElementById('stockAccountFilter').value;
+    let list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
+    if(filter !== 'all') list = list.filter(o => o.account === filter);
+    const tbody = document.querySelector('#stockTable tbody');
+    if(list.length===0) { tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无库存</td></tr>'; return; }
+    tbody.innerHTML = list.map(o => `
+      <tr><td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.receivedQty}</td><td>${o.soldQty||0}</td><td><strong>${o.receivedQty-(o.soldQty||0)}</strong></td><td>¥${o.unitPrice.toFixed(2)}</td><td>${o.receiveDate||''}</td></tr>`).join('');
+  }
+
+  // ---- 利润 ----
+  function renderProfit() {
+    const accountFilter = document.getElementById('profitAccount').value;
+    const start = document.getElementById('profitStart').value;
+    const end = document.getElementById('profitEnd').value;
+    let sales = data.sales;
+    if(accountFilter !== 'all') {
+      sales = sales.filter(s => s.batches?.some(b => {
+        const order = data.orders.find(o => o.id === b.orderId);
+        return order && order.account === accountFilter;
+      }));
+    }
+    if(start) sales = sales.filter(s => s.saleDate >= start);
+    if(end) sales = sales.filter(s => s.saleDate <= end);
+    let shippingTotal = 0;
+    data.shippingFees.forEach(f => {
+      if ((!start || f.date >= start) && (!end || f.date <= end)) shippingTotal += f.amount;
+    });
+    const totalSalesAmount = sales.reduce((s,v) => s + v.salePrice * v.qty, 0);
+    const totalCost = sales.reduce((s,v) => s + v.totalCost, 0);
+    const totalProfitBeforeShip = sales.reduce((s,v) => s + v.profit, 0);
+    const netProfit = totalProfitBeforeShip - shippingTotal;
+    document.getElementById('profitSummary').innerHTML = `
+      <div class="stat-box"><div>总销售额</div><div class="stat-num">¥${totalSalesAmount.toFixed(2)}</div></div>
+      <div class="stat-box"><div>商品成本</div><div class="stat-num">¥${totalCost.toFixed(2)}</div></div>
+      <div class="stat-box"><div>快递费合计</div><div class="stat-num">¥${shippingTotal.toFixed(2)}</div></div>
+      <div class="stat-box"><div>净利润</div><div class="stat-num" style="color:${netProfit>=0?'#16a34a':'#b91c1c'}">¥${netProfit.toFixed(2)}</div></div>
+    `;
+    const tbody = document.querySelector('#profitDetailTable tbody');
+    if(sales.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty">无数据</td></tr>'; return; }
+    tbody.innerHTML = sales.map(s => `
+      <tr><td>${s.product}</td><td>${s.qty}</td><td>¥${(s.salePrice*s.qty).toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td><td style="color:${s.profit>=0?'#16a34a':'#b91c1c'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td></tr>`).join('');
+  }
+
+  // 标签切换
+  function switchTab(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(name).classList.add('active');
+    document.querySelector(`.tab[data-tab="${name}"]`).classList.add('active');
+    if(name==='tab-stock') renderStock();
+    if(name==='tab-profit') renderProfit();
+    if(name==='tab-receive') renderPendingOrders();
+    if(name==='tab-purchase-order') { renderOrderList(); updateAllDatalists(); }
+    if(name==='tab-sale') { updateSalePreview(); updateAllDatalists(); }
+    if(name==='tab-shipping') renderShippingFees();
+  }
+
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+  document.getElementById('saleProduct').addEventListener('input', updateSalePreview);
+  document.getElementById('saleQty').addEventListener('input', updateSalePreview);
+  document.getElementById('salePrice').addEventListener('input', updateSalePreview);
+  document.getElementById('orderSearch')?.addEventListener('input', renderOrderList);
+  document.getElementById('receiveAccountFilter')?.addEventListener('change', renderPendingOrders);
+
+  // 初始化
+  loadData();
+  refreshAllUI();
+  document.getElementById('orderDate').valueAsDate = new Date();
+  document.getElementById('saleDate').valueAsDate = new Date();
+  document.getElementById('shippingDate').valueAsDate = new Date();
+  if(document.getElementById('profitEnd')) document.getElementById('profitEnd').valueAsDate = new Date();
+</script>
+</body>
+</html>
