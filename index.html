@@ -39,7 +39,6 @@
     .item-list { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
     .item-row { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
     .item-row input { width: auto; flex: 1; }
-    .total-cost-row { background: #f0f4ff; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -52,7 +51,7 @@
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
-  <p style="color:#666; margin-bottom: 8px;">个人版 · 混合采购 + 一键签收 | 快递费按日期</p>
+  <p style="color:#666; margin-bottom: 8px;">个人版 · 混合采购 + 逐条签收 | 快递费按日期</p>
 
   <div class="tabs">
     <div class="tab active" data-tab="tab-accounts">👤 账号</div>
@@ -112,16 +111,16 @@
     </table>
   </div>
 
-  <!-- 签收登记（无筛选，直接全部） -->
+  <!-- 签收登记（逐条签收） -->
   <div id="tab-receive" class="panel">
     <div class="row" style="justify-content: flex-end;">
-      <button class="secondary" onclick="renderPendingOrders()">刷新</button>
+      <button class="secondary" onclick="renderPendingItems()">刷新</button>
     </div>
     <table id="pendingTable">
-      <thead><tr><th>账号</th><th>订单号</th><th>商品数</th><th>订购总数</th><th>已签收数</th><th>未签收数</th><th>下单日期</th><th>操作</th></tr></thead>
+      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购数</th><th>已签收</th><th>未签收</th><th>下单日期</th><th>操作</th></tr></thead>
       <tbody></tbody>
     </table>
-    <p style="color:#666; margin-top:12px;">💡 一键签收该订单下的所有商品，进价沿用采购时价格，日期为今天。</p>
+    <p style="color:#666; margin-top:12px;">💡 逐条签收，每条商品单独确认，点击“签收”后整条商品全数入库。</p>
   </div>
 
   <!-- 销售出库 -->
@@ -163,7 +162,7 @@
     </table>
   </div>
 
-  <!-- 库存总览（默认全部） -->
+  <!-- 库存总览 -->
   <div id="tab-stock" class="panel">
     <div class="row" style="justify-content: flex-end;">
       <button class="secondary" onclick="renderStock()">刷新</button>
@@ -192,16 +191,13 @@
 </div>
 
 <script>
-  // ⚠️ 数据存储键名固定，永远不改，保你数据安全
   const STORAGE_KEY = 'JD_INVENTORY_V6';
-
   let data = {
     accounts: ['京东账号A', '京东账号B', '京东账号C', '京东账号D', '京东账号E', '京东账号F', '京东账号G'],
     orders: [],
     sales: [],
     shippingFees: []
   };
-
   let currentCart = [];
 
   function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -223,7 +219,6 @@
     clearCart();
   }
 
-  // 导出导入
   function exportData() {
     const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
@@ -247,12 +242,8 @@
             refreshAllUI();
             alert('导入成功！');
           }
-        } else {
-          alert('文件格式不正确');
-        }
-      } catch(err) {
-        alert('解析失败，请检查文件');
-      }
+        } else { alert('文件格式不正确'); }
+      } catch(err) { alert('解析失败，请检查文件'); }
     };
     reader.readAsText(file);
     input.value = '';
@@ -262,7 +253,7 @@
     refreshSelects();
     renderAccounts();
     renderOrderList();
-    renderPendingOrders();
+    renderPendingItems();
     renderSaleList();
     renderShippingFees();
     renderStock();
@@ -272,20 +263,12 @@
 
   function refreshSelects() {
     const orderAccount = document.getElementById('orderAccount');
-    if(orderAccount) {
-      orderAccount.innerHTML = '';
-      data.accounts.forEach(a => orderAccount.innerHTML += `<option value="${a}">${a}</option>`);
-    }
-    // 利润报表的账号下拉还在，需要保留
+    if(orderAccount) { orderAccount.innerHTML = ''; data.accounts.forEach(a => orderAccount.innerHTML += `<option value="${a}">${a}</option>`); }
     const profitAccount = document.getElementById('profitAccount');
-    if(profitAccount) {
-      profitAccount.innerHTML = '<option value="all">全部</option>';
-      data.accounts.forEach(a => profitAccount.innerHTML += `<option value="${a}">${a}</option>`);
-    }
+    if(profitAccount) { profitAccount.innerHTML = '<option value="all">全部</option>'; data.accounts.forEach(a => profitAccount.innerHTML += `<option value="${a}">${a}</option>`); }
   }
 
   function genId() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
-
   function updateAllDatalists() {
     const products = [...new Set(data.orders.map(o => o.product))];
     const html = products.map(p => `<option value="${p}">`).join('');
@@ -293,29 +276,25 @@
     document.getElementById('saleProductList').innerHTML = html;
   }
 
-  // ---- 账号 ----
+  // 账号管理
   function addAccount() {
     const name = document.getElementById('newAccountName').value.trim();
     if(!name) return alert('请输入名称');
     if(data.accounts.includes(name)) return alert('已存在');
-    data.accounts.push(name);
-    saveData();
+    data.accounts.push(name); saveData();
     document.getElementById('newAccountName').value = '';
-    refreshSelects();
-    renderAccounts();
+    refreshSelects(); renderAccounts();
   }
   function deleteAccount(name) {
     if(!confirm(`确定删除“${name}”吗？`)) return;
-    data.accounts = data.accounts.filter(a => a !== name);
-    saveData();
-    refreshSelects();
-    renderAccounts();
+    data.accounts = data.accounts.filter(a => a !== name); saveData();
+    refreshSelects(); renderAccounts();
   }
   function renderAccounts() {
     document.querySelector('#accountTable tbody').innerHTML = data.accounts.map(a => `<tr><td>${a}</td><td><button class="danger" onclick="deleteAccount('${a}')">删除</button></td></tr>`).join('');
   }
 
-  // ---- 采购录入 ----
+  // 采购录入
   function clearCart() { currentCart = []; renderCart(); }
   function addItemToCart() {
     const product = document.getElementById('itemProduct').value.trim();
@@ -331,18 +310,12 @@
   function removeFromCart(index) { currentCart.splice(index, 1); renderCart(); }
   function renderCart() {
     const container = document.getElementById('cartItems');
-    if (currentCart.length === 0) {
-      container.innerHTML = '<p style="color:#888;">暂无商品，请添加</p>';
-      return;
-    }
+    if (currentCart.length === 0) { container.innerHTML = '<p style="color:#888;">暂无商品，请添加</p>'; return; }
     container.innerHTML = currentCart.map((item, idx) => `
       <div class="item-row">
-        <span>${item.product}</span>
-        <span>数量: ${item.qty}</span>
-        <span>单价: ¥${item.unitPrice.toFixed(2)}</span>
+        <span>${item.product}</span> <span>数量: ${item.qty}</span> <span>单价: ¥${item.unitPrice.toFixed(2)}</span>
         <button class="danger" style="padding:4px 12px;" onclick="removeFromCart(${idx})">删除</button>
-      </div>
-    `).join('');
+      </div>`).join('');
   }
   function saveOrderItems() {
     const account = document.getElementById('orderAccount').value;
@@ -352,34 +325,21 @@
     if(!account || !orderNo || !date) return alert('请填写账号、订单号和日期');
     if(currentCart.length === 0) return alert('请至少添加一个商品');
     const newOrders = currentCart.map(item => ({
-      id: genId(),
-      account,
-      orderNo,
-      product: item.product,
-      qty: item.qty,
-      unitPrice: item.unitPrice,
-      date,
-      remark,
-      receivedQty: 0,
-      soldQty: 0,
-      status: 'pending'
+      id: genId(), account, orderNo, product: item.product, qty: item.qty, unitPrice: item.unitPrice,
+      date, remark, receivedQty: 0, soldQty: 0, status: 'pending'
     }));
     data.orders.push(...newOrders);
     saveData();
     clearCart();
-    document.getElementById('orderNo').value = '';
-    document.getElementById('orderRemark').value = '';
-    updateAllDatalists();   // 更新记忆列表，让你下次能选
-    renderOrderList();
+    document.getElementById('orderNo').value = ''; document.getElementById('orderRemark').value = '';
+    updateAllDatalists(); renderOrderList();
     alert('采购单已保存！');
   }
   function deleteOrder(id) {
     if(!confirm('删除此采购记录？')) return;
     data.orders = data.orders.filter(o => o.id !== id);
     saveData();
-    updateAllDatalists();
-    renderOrderList();
-    renderPendingOrders();
+    updateAllDatalists(); renderOrderList(); renderPendingItems();
   }
   function renderOrderList() {
     const search = (document.getElementById('orderSearch')?.value || '').toLowerCase();
@@ -397,62 +357,38 @@
     }).join('');
   }
 
-  // ---- 签收登记（不再选账号，直接显示全部） ----
-  function getPendingGroups() {
-    const groups = {};
-    data.orders.forEach(o => {
-      if (o.receivedQty < o.qty) {
-        if (!groups[o.orderNo]) {
-          groups[o.orderNo] = {
-            orderNo: o.orderNo,
-            account: o.account,
-            date: o.date,
-            items: [],
-            totalOrdered: 0,
-            totalReceived: 0
-          };
-        }
-        groups[o.orderNo].items.push(o);
-        groups[o.orderNo].totalOrdered += o.qty;
-        groups[o.orderNo].totalReceived += o.receivedQty;
-      }
-    });
-    return Object.values(groups);
-  }
-  function quickReceiveByOrderNo(orderNo) {
-    const ordersToUpdate = data.orders.filter(o => o.orderNo === orderNo && o.receivedQty < o.qty);
-    if(ordersToUpdate.length === 0) return;
-    ordersToUpdate.forEach(o => {
-      o.receivedQty = o.qty;
-      o.status = 'received';
-      o.receiveDate = new Date().toISOString().split('T')[0];
-    });
+  // ----- 签收登记：逐条签收 -----
+  function quickReceiveById(orderId) {
+    const order = data.orders.find(o => o.id === orderId);
+    if(!order || order.receivedQty >= order.qty) return;
+    order.receivedQty = order.qty;
+    order.status = 'received';
+    order.receiveDate = new Date().toISOString().split('T')[0];
+    if(order.soldQty === undefined) order.soldQty = 0;
     saveData();
-    renderPendingOrders();
+    renderPendingItems();
     renderOrderList();
-    alert('该订单下所有商品已签收！');
   }
-  function renderPendingOrders() {
-    const groups = getPendingGroups();
+  function renderPendingItems() {
+    const pending = data.orders.filter(o => o.receivedQty < o.qty);
     const tbody = document.querySelector('#pendingTable tbody');
-    if(groups.length === 0) {
+    if(pending.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty">🎉 所有商品均已签收</td></tr>';
       return;
     }
-    tbody.innerHTML = groups.map(g => {
-      const left = g.totalOrdered - g.totalReceived;
+    tbody.innerHTML = pending.map(o => {
+      const left = o.qty - o.receivedQty;
       return `<tr>
-        <td>${g.account}</td><td>${g.orderNo}</td><td>${g.items.length} 种</td><td>${g.totalOrdered}</td><td>${g.totalReceived}</td>
-        <td><strong>${left}</strong></td><td>${g.date}</td>
-        <td><button class="success" onclick="quickReceiveByOrderNo('${g.orderNo}')">📦 签收</button></td>
+        <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td>
+        <td><strong>${left}</strong></td><td>${o.date}</td>
+        <td><button class="success" onclick="quickReceiveById('${o.id}')">📦 签收</button></td>
       </tr>`;
     }).join('');
   }
 
-  // ---- 销售 ----
+  // 销售出库
   function getAvailableStock(productName) {
-    return data.orders
-      .filter(o => o.product === productName && o.receivedQty > (o.soldQty||0))
+    return data.orders.filter(o => o.product === productName && o.receivedQty > (o.soldQty||0))
       .sort((a,b) => (a.receiveDate||a.date).localeCompare(b.receiveDate||b.date));
   }
   function updateSalePreview() {
@@ -513,13 +449,10 @@
       const order = data.orders.find(o => o.id === b.orderId);
       if (order) order.soldQty = (order.soldQty||0) + b.qty;
     }
-    data.sales.push(sale);
-    saveData();
+    data.sales.push(sale); saveData();
     document.getElementById('saleQty').value = 1;
     document.getElementById('salePrice').value = '';
-    renderSaleList();
-    updateAllDatalists();
-    updateSalePreview();
+    renderSaleList(); updateAllDatalists(); updateSalePreview();
   }
   function deleteSale(id) {
     if(!confirm('删除此销售记录将恢复库存，确定吗？')) return;
@@ -530,8 +463,7 @@
         if(order) order.soldQty = Math.max(0, (order.soldQty||0) - b.qty);
       }
     }
-    data.sales = data.sales.filter(s => s.id !== id);
-    saveData();
+    data.sales = data.sales.filter(s => s.id !== id); saveData();
     renderSaleList();
   }
   function renderSaleList() {
@@ -545,22 +477,20 @@
       </tr>`).join('');
   }
 
-  // ---- 快递费 ----
+  // 快递费
   function addShippingFee() {
     const date = document.getElementById('shippingDate').value;
     const amount = parseFloat(document.getElementById('shippingAmount').value);
     const note = document.getElementById('shippingNote').value.trim();
     if(!date || isNaN(amount) || amount <= 0) return alert('请填写日期和有效金额');
-    data.shippingFees.push({ id: genId(), date, amount, note });
-    saveData();
+    data.shippingFees.push({ id: genId(), date, amount, note }); saveData();
     document.getElementById('shippingAmount').value = '';
     document.getElementById('shippingNote').value = '';
     renderShippingFees();
   }
   function deleteShippingFee(id) {
     if(!confirm('删除快递费记录？')) return;
-    data.shippingFees = data.shippingFees.filter(f => f.id !== id);
-    saveData();
+    data.shippingFees = data.shippingFees.filter(f => f.id !== id); saveData();
     renderShippingFees();
   }
   function renderShippingFees() {
@@ -571,7 +501,7 @@
       <tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note || ''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
   }
 
-  // ---- 库存（默认全部，无筛选） ----
+  // 库存
   function renderStock() {
     const list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
     const tbody = document.querySelector('#stockTable tbody');
@@ -591,7 +521,7 @@
     document.getElementById('stockTotalCost').innerHTML = `<div style="text-align:right; margin-top:8px;">📊 库存总成本：<strong style="font-size:1.2rem;">¥${totalCost.toFixed(2)}</strong></div>`;
   }
 
-  // ---- 利润 ----
+  // 利润
   function renderProfit() {
     const accountFilter = document.getElementById('profitAccount').value;
     const start = document.getElementById('profitStart').value;
@@ -633,7 +563,7 @@
     document.querySelector(`.tab[data-tab="${name}"]`).classList.add('active');
     if(name==='tab-stock') renderStock();
     if(name==='tab-profit') renderProfit();
-    if(name==='tab-receive') renderPendingOrders();
+    if(name==='tab-receive') renderPendingItems();
     if(name==='tab-purchase-order') { renderOrderList(); updateAllDatalists(); }
     if(name==='tab-sale') { updateSalePreview(); updateAllDatalists(); }
     if(name==='tab-shipping') renderShippingFees();
