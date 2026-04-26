@@ -3,234 +3,414 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>进销存 · 个人版</title>
+  <title>进销存 · 苹果版</title>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
+    :root {
+      --ios-bg: #f2f2f7;
+      --ios-card: #ffffff;
+      --ios-text: #1c1c1e;
+      --ios-secondary: #8e8e93;
+      --ios-blue: #007aff;
+      --ios-green: #34c759;
+      --ios-red: #ff3b30;
+      --ios-orange: #ff9500;
+      --ios-separator: #e5e5ea;
+      --ios-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      --ios-radius: 14px;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #222; padding: 16px; }
-    .container { max-width: 1100px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-    h1 { font-size: 1.8rem; }
-    .sync-btns { display: flex; gap: 8px; }
-    .sync-btns button { background: white; border: 1px solid #ccc; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
-    .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
-    .tab { padding: 10px 18px; background: #f0f0f0; border: 1px solid #ddd; border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
-    .tab.active { background: white; color: #2563eb; border-color: #2563eb; font-weight: 600; }
-    .panel { background: white; border: 1px solid #e5e7eb; border-radius: 0 12px 12px 12px; padding: 20px; display: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background: var(--ios-bg);
+      color: var(--ios-text);
+      -webkit-font-smoothing: antialiased;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(242,242,247,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--ios-separator);
+    }
+    .header h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .sync-btns { display: flex; gap: 6px; }
+    .sync-btns button {
+      background: var(--ios-card);
+      border: none;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--ios-blue);
+      box-shadow: var(--ios-shadow);
+      cursor: pointer;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 8px 12px; }
+
+    .tabs {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 6px 0 8px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex: 0 0 auto;
+      padding: 8px 16px;
+      background: var(--ios-card);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--ios-text);
+      box-shadow: var(--ios-shadow);
+      cursor: pointer;
+      white-space: nowrap;
+      border: 1.5px solid transparent;
+    }
+    .tab.active {
+      background: var(--ios-blue);
+      color: white;
+      border-color: var(--ios-blue);
+      font-weight: 600;
+    }
+
+    .panel { display: none; margin-top: 6px; }
     .panel.active { display: block; }
-    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; align-items: center; }
-    .col { flex: 1 1 180px; }
-    label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 0.85rem; color: #444; }
-    input, select, button { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; width: 100%; background: white; }
-    button { background: #2563eb; color: white; border: none; font-weight: 600; cursor: pointer; width: auto; padding: 10px 20px; }
-    button:hover { opacity: 0.9; }
-    button.danger { background: #b91c1c; }
-    button.secondary { background: #e5e7eb; color: #333; }
-    button.success { background: #16a34a; }
-    button.warning { background: #f59e0b; color: white; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.85rem; }
-    th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
-    td { padding: 8px 12px; border-bottom: 1px solid #eee; }
-    .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
-    .badge-warning { background: #fef3c7; color: #92400e; }
-    .badge-success { background: #dcfce7; color: #166534; }
-    hr { margin: 16px 0; border: 0.5px solid #e5e7eb; }
-    .empty { color: #888; text-align: center; padding: 30px; }
-    .stat-box { background: #f9fafb; border: 1px solid #eee; border-radius: 8px; padding: 14px 18px; display: inline-block; margin-right: 12px; margin-bottom: 12px; min-width: 130px; }
-    .stat-num { font-size: 1.8rem; font-weight: 700; color: #111827; }
-    .item-list { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
-    .item-row { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-    .ocr-section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 20px; background-color: #f9fafb; }
-    .ocr-trigger-btn { background-color: #16a34a; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    .ocr-preview-img { max-width: 100%; height: auto; margin-top: 15px; border: 1px solid #ccc; border-radius: 4px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
-    .ocr-status { margin-top: 10px; font-size: 0.9rem; color: #555; }
-    .ocr-result-input { background-color: #f0fdf4; border: 2px solid #86efac; }
-    .quick-form { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px dashed #2563eb; }
-    .stock-info { margin-left: 8px; font-size: 0.85rem; color: #2563eb; font-weight: 500; }
-    .edit-panel { background: #fef9c3; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
-    .group-summary { background: #f0fdf4; border-radius: 8px; padding: 12px; margin-top: 12px; }
-    .group-summary table { margin-top: 0; }
+
+    .card {
+      background: var(--ios-card);
+      border-radius: var(--ios-radius);
+      padding: 14px 12px;
+      margin-bottom: 12px;
+      box-shadow: var(--ios-shadow);
+    }
+
+    .row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: center; }
+    .col { flex: 1 1 160px; min-width: 120px; }
+
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 4px;
+      font-size: 0.75rem;
+      color: var(--ios-secondary);
+      text-transform: uppercase;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 12px;
+      border: 1px solid var(--ios-separator);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      background: #f9f9f9;
+      color: var(--ios-text);
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--ios-blue);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+    }
+    button {
+      padding: 11px 18px;
+      background: var(--ios-blue);
+      color: white;
+      border: none;
+      font-weight: 600;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button.danger { background: var(--ios-red); }
+    button.secondary { background: #e5e5ea; color: var(--ios-text); }
+    button.success { background: var(--ios-green); }
+    button.warning { background: var(--ios-orange); color: white; }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: var(--ios-radius);
+      box-shadow: var(--ios-shadow);
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.8rem;
+      background: var(--ios-card);
+      min-width: 600px;
+    }
+    th {
+      background: #f9f9f9;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.7rem;
+      color: var(--ios-secondary);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--ios-separator);
+      white-space: nowrap;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--ios-separator);
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-success { background: #d4edda; color: #155724; }
+
+    hr { margin: 16px 0; border: 0.5px solid var(--ios-separator); }
+    .empty { color: var(--ios-secondary); text-align: center; padding: 30px; }
+
+    .stat-box {
+      background: var(--ios-card);
+      border-radius: var(--ios-radius);
+      padding: 14px;
+      display: inline-block;
+      margin: 4px;
+      min-width: 100px;
+      box-shadow: var(--ios-shadow);
+      text-align: center;
+    }
+    .stat-num { font-size: 1.5rem; font-weight: 700; margin-top: 4px; }
+
+    .item-list { background: #f9f9f9; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+    .item-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+
+    .ocr-section {
+      background: var(--ios-card);
+      border-radius: var(--ios-radius);
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: var(--ios-shadow);
+    }
+    .ocr-preview-img { max-width: 100%; border-radius: 10px; margin-top: 10px; }
+    .ocr-status { font-size: 0.8rem; color: var(--ios-secondary); margin-top: 6px; }
+
+    .quick-form {
+      background: var(--ios-card);
+      border-radius: var(--ios-radius);
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--ios-shadow);
+    }
+    .stock-info { font-size: 0.8rem; color: var(--ios-blue); margin-left: 4px; font-weight: 500; }
+    .edit-panel { background: #fff3cd; padding: 10px; border-radius: 10px; margin: 10px 0; }
+    .group-summary { margin-top: 14px; }
   </style>
 </head>
 <body>
-<div class="container">
   <div class="header">
-    <h1>📦 京东多账号进销存</h1>
+    <h1>进销存</h1>
     <div class="sync-btns">
-      <button onclick="exportData()">📤 导出数据</button>
-      <button onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+      <button onclick="exportData()">📤</button>
+      <button onclick="document.getElementById('importFile').click()">📥</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
-  <p style="color:#666; margin-bottom: 8px;">个人版 · OCR识别 + 混合采购 + 快速入库 + 搜索/编辑/汇总</p>
 
-  <div class="tabs">
-    <div class="tab active" data-tab="tab-accounts">👤 账号</div>
-    <div class="tab" data-tab="tab-purchase-order">📋 采购录入</div>
-    <div class="tab" data-tab="tab-receive">✅ 签收登记</div>
-    <div class="tab" data-tab="tab-sale">📤 销售出库</div>
-    <div class="tab" data-tab="tab-shipping">🚚 快递费</div>
-    <div class="tab" data-tab="tab-stock">📊 库存</div>
-    <div class="tab" data-tab="tab-profit">💰 利润</div>
-  </div>
-
-  <!-- 账号管理 -->
-  <div id="tab-accounts" class="panel active">
-    <div class="row">
-      <div class="col"><input type="text" id="newAccountName" placeholder="账号名称，例如：京东号A"></div>
-      <div><button onclick="addAccount()">➕ 添加</button></div>
+  <div class="container">
+    <div class="tabs">
+      <div class="tab active" data-tab="tab-accounts">账号</div>
+      <div class="tab" data-tab="tab-purchase-order">采购</div>
+      <div class="tab" data-tab="tab-receive">签收</div>
+      <div class="tab" data-tab="tab-sale">销售</div>
+      <div class="tab" data-tab="tab-shipping">运费</div>
+      <div class="tab" data-tab="tab-stock">库存</div>
+      <div class="tab" data-tab="tab-profit">利润</div>
     </div>
-    <table id="accountTable">
-      <thead><tr><th>账号名称</th><th style="width:80px;"></th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
 
-  <!-- 采购录入 -->
-  <div id="tab-purchase-order" class="panel">
-    <div class="ocr-section">
-      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-        <input type="file" id="ocrImageInput" accept="image/*" style="display: none;">
-        <button class="ocr-trigger-btn" onclick="document.getElementById('ocrImageInput').click()">📸 上传截图并识别</button>
-        <span style="font-size: 0.9rem; color: #666;">(上传京东订单截图，自动填单号、数量与价格)</span>
+    <!-- 账号管理 -->
+    <div id="tab-accounts" class="panel active">
+      <div class="card">
+        <div class="row">
+          <div class="col"><input type="text" id="newAccountName" placeholder="账号名称"></div>
+          <div><button onclick="addAccount()">➕ 添加</button></div>
+        </div>
       </div>
-      <div id="ocrStatus" class="ocr-status"></div>
-      <img id="ocrPreview" class="ocr-preview-img" style="display: none;" alt="订单截图预览">
-    </div>
-
-    <div class="row">
-      <div class="col"><label>账号</label><select id="orderAccount"></select></div>
-      <div class="col"><label>京东订单号</label><input type="text" id="orderNo" placeholder="必填，也可由截图识别"></div>
-      <div class="col"><label>下单日期</label><input type="date" id="orderDate"></div>
-    </div>
-    <div class="row">
-      <div class="col"><label>备注</label><input type="text" id="orderRemark" placeholder="选填"></div>
-    </div>
-    <hr>
-    <h4>添加商品到当前订单</h4>
-    <div class="row">
-      <div class="col"><label>商品名称</label><input type="text" id="itemProduct" list="productList" autocomplete="off" placeholder="输入或选择历史商品"></div>
-      <datalist id="productList"></datalist>
-      <div class="col"><label>数量</label><input type="number" id="itemQty" value="1" min="1"></div>
-      <div class="col"><label>进价 (元/件)</label><input type="number" id="itemPrice" step="0.01" placeholder="单价，也可由截图识别"></div>
-      <div><button class="secondary" onclick="addItemToCart()">➕ 添加商品</button></div>
-    </div>
-    <div class="item-list" id="cartItems">
-      <p style="color:#888;">暂无商品，请添加</p>
-    </div>
-    <div class="row" style="justify-content: flex-end;">
-      <button onclick="saveOrderItems()">📝 保存采购单</button>
-    </div>
-    <hr>
-    <div class="row">
-      <div class="col"><input type="text" id="orderSearch" placeholder="🔍 搜索订单号或商品"></div>
-      <div><button class="secondary" onclick="renderOrderList()">刷新</button></div>
-    </div>
-    <table id="orderTable">
-      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购</th><th>已签收</th><th>状态</th><th>日期</th><th>操作</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <!-- 编辑弹窗占位 -->
-    <div id="editOrderPanel" style="display:none;" class="edit-panel"></div>
-  </div>
-
-  <!-- 签收登记 -->
-  <div id="tab-receive" class="panel">
-    <div class="row">
-      <div class="col"><input type="text" id="receiveSearch" placeholder="🔍 搜索订单号或商品"></div>
-      <button class="secondary" onclick="renderPendingItems()">刷新</button>
-    </div>
-    <table id="pendingTable">
-      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购数</th><th>已签收</th><th>未签收</th><th>下单日期</th><th>操作</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <p style="color:#666; margin-top:12px;">💡 逐条签收，每条商品单独确认，点击“签收”后整条商品全数入库。</p>
-  </div>
-
-  <!-- 销售出库 -->
-  <div id="tab-sale" class="panel">
-    <div class="row">
-      <div class="col"><label>商品名称</label><input type="text" id="saleProduct" list="saleProductList" autocomplete="off" placeholder="选择或输入商品"><span id="saleStockInfo" class="stock-info"></span></div>
-      <datalist id="saleProductList"></datalist>
-      <div class="col"><label>数量</label><input type="number" id="saleQty" value="1" min="1"></div>
-      <div class="col"><label>售价 (元/件)</label><input type="number" id="salePrice" step="0.01" placeholder="拼多多卖价"></div>
-    </div>
-    <div class="row">
-      <div class="col"><label>销售日期</label><input type="date" id="saleDate"></div>
-    </div>
-    <div class="row">
-      <div class="col"><strong>预估商品成本：</strong><span id="costPreview">--</span> 元/件</div>
-      <div class="col"><strong>预估总成本：</strong><span id="totalCostPreview">--</span> 元</div>
-      <div class="col"><strong>预估利润：</strong><span id="estProfit">--</span> 元（未含快递费）</div>
-      <div><button onclick="addSale()">📌 记录销售</button></div>
-    </div>
-    <hr>
-    <table id="saleTable">
-      <thead><tr><th>商品</th><th>数量</th><th>售价</th><th>商品成本</th><th>利润(未扣运费)</th><th>日期</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- 快递费 -->
-  <div id="tab-shipping" class="panel">
-    <div class="row">
-      <div class="col"><label>日期</label><input type="date" id="shippingDate"></div>
-      <div class="col"><label>总快递费 (元)</label><input type="number" id="shippingAmount" step="0.01" placeholder="例如当天或两天合计"></div>
-      <div class="col"><label>备注 (选填)</label><input type="text" id="shippingNote" placeholder="例如：圆通/顺丰"></div>
-      <div><button onclick="addShippingFee()">🚚 记录快递费</button></div>
-    </div>
-    <hr>
-    <table id="shippingTable">
-      <thead><tr><th>日期</th><th>金额</th><th>备注</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- 库存总览 -->
-  <div id="tab-stock" class="panel">
-    <div class="row">
-      <div class="col"><input type="text" id="stockSearch" placeholder="🔍 搜索商品名称"></div>
-      <button class="success" id="toggleQuickFormBtn" onclick="toggleQuickForm()">➕ 快速入库</button>
-      <button class="secondary" onclick="renderStock()">刷新</button>
-    </div>
-    <div id="quickStockForm" class="quick-form" style="display: none;">
-      <h4>📥 直接新增库存</h4>
-      <div class="row">
-        <div class="col"><label>账号</label><select id="quickAccount"></select></div>
-        <div class="col"><label>商品名称</label><input type="text" id="quickProduct" list="productList" autocomplete="off" placeholder="点此选择或输入"></div>
-        <div class="col"><label>数量</label><input type="number" id="quickQty" value="1" min="1"></div>
-        <div class="col"><label>进价 (元/件)</label><input type="number" id="quickPrice" step="0.01" placeholder="单价"></div>
-        <div class="col"><label>入库日期</label><input type="date" id="quickDate"></div>
-      </div>
-      <div class="row">
-        <div class="col"><label>备注</label><input type="text" id="quickRemark" placeholder="选填"></div>
-        <div><button onclick="quickAddStock()">✅ 确认入库</button></div>
+      <div class="table-wrapper">
+        <table id="accountTable">
+          <thead><tr><th>账号名称</th><th style="width:60px;"></th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
-    <table id="stockTable">
-      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本</th><th>签收日</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <div id="stockTotalCost" style="margin-top: 12px; font-weight: 600;"></div>
-  </div>
 
-  <!-- 利润报表 -->
-  <div id="tab-profit" class="panel">
-    <div class="row">
-      <div class="col"><label>账号</label><select id="profitAccount"><option value="all">全部</option></select></div>
-      <div class="col"><label>从</label><input type="date" id="profitStart"></div>
-      <div class="col"><label>到</label><input type="date" id="profitEnd"></div>
-      <div><button onclick="renderProfit()">查询</button></div>
+    <!-- 采购录入 -->
+    <div id="tab-purchase-order" class="panel">
+      <div class="ocr-section">
+        <div><input type="file" id="ocrImageInput" accept="image/*" style="display:none;"></div>
+        <button class="success" onclick="document.getElementById('ocrImageInput').click()">📸 识别截图</button>
+        <span style="font-size:0.8rem;color:var(--ios-secondary);margin-left:8px;">自动填单号、数量、价格</span>
+        <div id="ocrStatus" class="ocr-status"></div>
+        <img id="ocrPreview" class="ocr-preview-img" style="display:none;">
+      </div>
+      <div class="card">
+        <div class="row">
+          <div class="col"><label>账号</label><select id="orderAccount"></select></div>
+          <div class="col"><label>订单号</label><input type="text" id="orderNo"></div>
+          <div class="col"><label>日期</label><input type="date" id="orderDate"></div>
+        </div>
+        <div class="row"><div class="col"><label>备注</label><input type="text" id="orderRemark"></div></div>
+        <hr>
+        <h4 style="margin-bottom:8px;">添加商品</h4>
+        <div class="row">
+          <div class="col"><input type="text" id="itemProduct" list="productList" autocomplete="off" placeholder="商品名称"></div>
+          <datalist id="productList"></datalist>
+          <div class="col"><input type="number" id="itemQty" value="1" min="1"></div>
+          <div class="col"><input type="number" id="itemPrice" step="0.01" placeholder="进价"></div>
+          <div><button class="secondary" onclick="addItemToCart()">➕</button></div>
+        </div>
+        <div class="item-list" id="cartItems"><p style="color:#aaa;">暂无商品</p></div>
+        <button onclick="saveOrderItems()">📝 保存采购单</button>
+      </div>
+      <div class="card">
+        <div class="row"><div class="col"><input type="text" id="orderSearch" placeholder="🔍 搜索"></div></div>
+        <div class="table-wrapper">
+          <table id="orderTable">
+            <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购</th><th>已签收</th><th>状态</th><th>日期</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="editOrderPanel" style="display:none;" class="edit-panel"></div>
     </div>
-    <div id="profitSummary" style="margin-bottom:12px;"></div>
-    <table id="profitDetailTable">
-      <thead><tr><th>商品</th><th>数量</th><th>销售额</th><th>商品成本</th><th>利润(未扣运费)</th><th>日期</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <!-- 按商品汇总 -->
-    <div id="profitGroupSummary" class="group-summary" style="margin-top:16px;"></div>
+
+    <!-- 签收登记 -->
+    <div id="tab-receive" class="panel">
+      <div class="card">
+        <div class="row"><div class="col"><input type="text" id="receiveSearch" placeholder="🔍 搜索待签收"></div></div>
+        <div class="table-wrapper">
+          <table id="pendingTable">
+            <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购</th><th>已签收</th><th>未签收</th><th>日期</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 销售出库 -->
+    <div id="tab-sale" class="panel">
+      <div class="card">
+        <div class="row">
+          <div class="col"><label>商品</label><input type="text" id="saleProduct" list="saleProductList" autocomplete="off" placeholder="选择或输入"><span id="saleStockInfo" class="stock-info"></span></div>
+          <datalist id="saleProductList"></datalist>
+          <div class="col"><label>数量</label><input type="number" id="saleQty" value="1" min="1"></div>
+          <div class="col"><label>售价</label><input type="number" id="salePrice" step="0.01" placeholder="卖价"></div>
+        </div>
+        <div class="row"><div class="col"><label>日期</label><input type="date" id="saleDate"></div></div>
+        <div class="row" style="font-size:0.9rem; color:var(--ios-secondary);">
+          <div>成本：<span id="costPreview">--</span> 元/件</div>
+          <div>总成本：<span id="totalCostPreview">--</span></div>
+          <div>预估利润：<span id="estProfit">--</span></div>
+        </div>
+        <button onclick="addSale()">📌 记录销售</button>
+      </div>
+      <div class="table-wrapper">
+        <table id="saleTable">
+          <thead><tr><th>商品</th><th>数量</th><th>售价</th><th>成本</th><th>利润</th><th>日期</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 快递费 -->
+    <div id="tab-shipping" class="panel">
+      <div class="card">
+        <div class="row">
+          <div class="col"><label>日期</label><input type="date" id="shippingDate"></div>
+          <div class="col"><label>总运费</label><input type="number" id="shippingAmount" step="0.01"></div>
+          <div class="col"><label>备注</label><input type="text" id="shippingNote"></div>
+          <div><button onclick="addShippingFee()">🚚 记录</button></div>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="shippingTable">
+          <thead><tr><th>日期</th><th>金额</th><th>备注</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 库存 -->
+    <div id="tab-stock" class="panel">
+      <div class="card">
+        <div class="row">
+          <div class="col"><input type="text" id="stockSearch" placeholder="🔍 搜索库存"></div>
+          <button class="success" onclick="toggleQuickForm()">➕ 快速入库</button>
+        </div>
+        <div id="quickStockForm" class="quick-form" style="display:none;">
+          <h4>📥 新增库存</h4>
+          <div class="row">
+            <div class="col"><select id="quickAccount"></select></div>
+            <div class="col"><input type="text" id="quickProduct" list="productList" autocomplete="off" placeholder="商品"></div>
+            <div class="col"><input type="number" id="quickQty" value="1" min="1"></div>
+            <div class="col"><input type="number" id="quickPrice" step="0.01" placeholder="进价"></div>
+            <div class="col"><input type="date" id="quickDate"></div>
+          </div>
+          <div class="row">
+            <div class="col"><input type="text" id="quickRemark" placeholder="备注"></div>
+            <div><button onclick="quickAddStock()">✅ 入库</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="stockTable">
+          <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本</th><th>签收日</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="stockTotalCost" style="margin-top:12px;font-weight:600;"></div>
+    </div>
+
+    <!-- 利润报表 -->
+    <div id="tab-profit" class="panel">
+      <div class="card">
+        <div class="row">
+          <div class="col"><select id="profitAccount"><option value="all">全部账号</option></select></div>
+          <div class="col"><input type="date" id="profitStart"></div>
+          <div class="col"><input type="date" id="profitEnd"></div>
+          <div><button onclick="renderProfit()">查询</button></div>
+        </div>
+      </div>
+      <div id="profitSummary" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      <div class="table-wrapper">
+        <table id="profitDetailTable">
+          <thead><tr><th>商品</th><th>数量</th><th>销售额</th><th>成本</th><th>利润</th><th>日期</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="profitGroupSummary" class="group-summary"></div>
+    </div>
   </div>
-</div>
 
 <script>
   const STORAGE_KEY = 'JD_INVENTORY_V6';
@@ -245,15 +425,13 @@
   function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
   function loadData() {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const p = JSON.parse(stored);
-        data.accounts = p.accounts || data.accounts;
-        data.orders = p.orders || [];
-        data.sales = p.sales || [];
-        data.shippingFees = p.shippingFees || [];
-      } catch(e) {}
-    }
+    if (stored) try {
+      const p = JSON.parse(stored);
+      data.accounts = p.accounts || data.accounts;
+      data.orders = p.orders || [];
+      data.sales = p.sales || [];
+      data.shippingFees = p.shippingFees || [];
+    } catch(e) {}
     document.getElementById('orderDate').valueAsDate = new Date();
     document.getElementById('saleDate').valueAsDate = new Date();
     document.getElementById('shippingDate').valueAsDate = new Date();
@@ -266,9 +444,7 @@
     const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `进销存_备份_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
+    a.href = url; a.download = `进销存_备份_${new Date().toISOString().slice(0,10)}.json`; a.click();
     URL.revokeObjectURL(url);
   }
   function importData(input) {
@@ -279,38 +455,22 @@
       try {
         const imported = JSON.parse(e.target.result);
         if (imported.accounts && imported.orders && imported.sales && imported.shippingFees) {
-          if (confirm('即将覆盖当前所有数据，确定导入吗？')) {
-            data = imported;
-            saveData();
-            refreshAllUI();
-            alert('导入成功！');
-          }
-        } else { alert('文件格式不正确'); }
-      } catch(err) { alert('解析失败，请检查文件'); }
+          if (confirm('即将覆盖当前所有数据，确定导入吗？')) { data = imported; saveData(); refreshAllUI(); alert('导入成功！'); }
+        } else alert('文件格式不正确');
+      } catch(err) { alert('解析失败'); }
     };
-    reader.readAsText(file);
-    input.value = '';
+    reader.readAsText(file); input.value = '';
   }
 
   function refreshAllUI() {
-    refreshSelects();
-    renderAccounts();
-    renderOrderList();
-    renderPendingItems();
-    renderSaleList();
-    renderShippingFees();
-    renderStock();
-    updateAllDatalists();
-    updateSalePreview();
+    refreshSelects(); renderAccounts(); renderOrderList(); renderPendingItems();
+    renderSaleList(); renderShippingFees(); renderStock(); updateAllDatalists(); updateSalePreview();
   }
 
   function refreshSelects() {
-    const orderAccount = document.getElementById('orderAccount');
-    if(orderAccount) { orderAccount.innerHTML = ''; data.accounts.forEach(a => orderAccount.innerHTML += `<option value="${a}">${a}</option>`); }
-    const quickAccount = document.getElementById('quickAccount');
-    if(quickAccount) { quickAccount.innerHTML = ''; data.accounts.forEach(a => quickAccount.innerHTML += `<option value="${a}">${a}</option>`); }
-    const profitAccount = document.getElementById('profitAccount');
-    if(profitAccount) { profitAccount.innerHTML = '<option value="all">全部</option>'; data.accounts.forEach(a => profitAccount.innerHTML += `<option value="${a}">${a}</option>`); }
+    const oa = document.getElementById('orderAccount'); if(oa) { oa.innerHTML = data.accounts.map(a => `<option value="${a}">${a}</option>`).join(''); }
+    const qa = document.getElementById('quickAccount'); if(qa) { qa.innerHTML = data.accounts.map(a => `<option value="${a}">${a}</option>`).join(''); }
+    const pa = document.getElementById('profitAccount'); if(pa) { pa.innerHTML = '<option value="all">全部</option>'+data.accounts.map(a => `<option value="${a}">${a}</option>`).join(''); }
   }
 
   function genId() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
@@ -321,7 +481,7 @@
     document.getElementById('saleProductList').innerHTML = html;
   }
 
-  // ========== 账号 ==========
+  // 账号
   function addAccount() {
     const name = document.getElementById('newAccountName').value.trim();
     if(!name) return alert('请输入名称');
@@ -339,7 +499,7 @@
     document.querySelector('#accountTable tbody').innerHTML = data.accounts.map(a => `<tr><td>${a}</td><td><button class="danger" onclick="deleteAccount('${a}')">删除</button></td></tr>`).join('');
   }
 
-  // ========== 采购录入 ==========
+  // 采购录入
   function clearCart() { currentCart = []; renderCart(); }
   function addItemToCart() {
     const product = document.getElementById('itemProduct').value.trim();
@@ -355,11 +515,11 @@
   function removeFromCart(index) { currentCart.splice(index, 1); renderCart(); }
   function renderCart() {
     const container = document.getElementById('cartItems');
-    if (currentCart.length === 0) { container.innerHTML = '<p style="color:#888;">暂无商品，请添加</p>'; return; }
+    if (currentCart.length === 0) { container.innerHTML = '<p style="color:#aaa;">暂无商品</p>'; return; }
     container.innerHTML = currentCart.map((item, idx) => `
       <div class="item-row">
-        <span>${item.product}</span> <span>数量: ${item.qty}</span> <span>单价: ¥${item.unitPrice.toFixed(2)}</span>
-        <button class="danger" style="padding:4px 12px;" onclick="removeFromCart(${idx})">删除</button>
+        <span>${item.product} ×${item.qty} ¥${item.unitPrice.toFixed(2)}</span>
+        <button class="danger" style="padding:4px 10px;" onclick="removeFromCart(${idx})">删除</button>
       </div>`).join('');
   }
   function saveOrderItems() {
@@ -374,14 +534,11 @@
       date, remark, receivedQty: 0, soldQty: 0, status: 'pending'
     }));
     data.orders.push(...newOrders);
-    saveData();
-    clearCart();
+    saveData(); clearCart();
     document.getElementById('orderNo').value = ''; document.getElementById('orderRemark').value = '';
     updateAllDatalists(); renderOrderList();
     alert('采购单已保存！');
   }
-
-  // ---- 编辑采购单 (P2) ----
   function editOrder(id) {
     const order = data.orders.find(o => o.id === id);
     if (!order) return;
@@ -390,22 +547,18 @@
     panel.innerHTML = `
       <h4>✏️ 编辑采购记录</h4>
       <div class="row">
-        <div class="col"><label>账号</label><select id="editAccount">${data.accounts.map(a => `<option value="${a}" ${a===order.account?'selected':''}>${a}</option>`).join('')}</select></div>
-        <div class="col"><label>订单号</label><input type="text" id="editOrderNo" value="${order.orderNo}"></div>
-        <div class="col"><label>商品</label><input type="text" id="editProduct" value="${order.product}"></div>
+        <div class="col"><select id="editAccount">${data.accounts.map(a => `<option value="${a}" ${a===order.account?'selected':''}>${a}</option>`).join('')}</select></div>
+        <div class="col"><input type="text" id="editOrderNo" value="${order.orderNo}"></div>
+        <div class="col"><input type="text" id="editProduct" value="${order.product}"></div>
       </div>
       <div class="row">
-        <div class="col"><label>数量</label><input type="number" id="editQty" value="${order.qty}" min="${order.receivedQty || 0}"></div>
-        <div class="col"><label>进价</label><input type="number" id="editPrice" step="0.01" value="${order.unitPrice}"></div>
-        <div class="col"><label>日期</label><input type="date" id="editDate" value="${order.date}"></div>
+        <div class="col"><input type="number" id="editQty" value="${order.qty}" min="${order.receivedQty||0}"></div>
+        <div class="col"><input type="number" id="editPrice" step="0.01" value="${order.unitPrice}"></div>
+        <div class="col"><input type="date" id="editDate" value="${order.date}"></div>
       </div>
-      <div class="row">
-        <div class="col"><label>备注</label><input type="text" id="editRemark" value="${order.remark || ''}"></div>
-      </div>
-      <div class="row">
-        <button onclick="saveEditOrder('${order.id}')">💾 保存修改</button>
-        <button class="secondary" onclick="document.getElementById('editOrderPanel').style.display='none'">取消</button>
-      </div>
+      <div class="row"><div class="col"><input type="text" id="editRemark" value="${order.remark||''}"></div></div>
+      <button onclick="saveEditOrder('${order.id}')">💾 保存</button>
+      <button class="secondary" onclick="document.getElementById('editOrderPanel').style.display='none'">取消</button>
     `;
   }
   function saveEditOrder(id) {
@@ -414,27 +567,22 @@
     const newQty = parseInt(document.getElementById('editQty').value);
     const newPrice = parseFloat(document.getElementById('editPrice').value);
     if (!newQty || isNaN(newPrice)) return alert('数量和进价必填');
-    if (newQty < (order.receivedQty || 0)) return alert(`数量不能小于已签收数量(${order.receivedQty})`);
+    if (newQty < (order.receivedQty||0)) return alert(`不能小于已签收数量(${order.receivedQty})`);
     order.account = document.getElementById('editAccount').value;
     order.orderNo = document.getElementById('editOrderNo').value.trim();
     order.product = document.getElementById('editProduct').value.trim();
-    order.qty = newQty;
-    order.unitPrice = newPrice;
+    order.qty = newQty; order.unitPrice = newPrice;
     order.date = document.getElementById('editDate').value;
     order.remark = document.getElementById('editRemark').value.trim();
     saveData();
     document.getElementById('editOrderPanel').style.display = 'none';
-    updateAllDatalists();
-    renderOrderList();
-    renderPendingItems();
+    updateAllDatalists(); renderOrderList(); renderPendingItems();
     alert('修改已保存');
   }
-
   function deleteOrder(id) {
     if(!confirm('删除此采购记录？')) return;
     data.orders = data.orders.filter(o => o.id !== id);
-    saveData();
-    updateAllDatalists(); renderOrderList(); renderPendingItems();
+    saveData(); updateAllDatalists(); renderOrderList(); renderPendingItems();
   }
   function renderOrderList() {
     const search = (document.getElementById('orderSearch')?.value || '').toLowerCase();
@@ -448,14 +596,14 @@
         <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td>
         <td>${badge}</td><td>${o.date}</td>
         <td>
-          <button class="warning" style="padding:4px 10px; margin-right:4px;" onclick="editOrder('${o.id}')">编辑</button>
-          <button class="danger" style="padding:4px 10px;" onclick="deleteOrder('${o.id}')">删除</button>
+          <button class="warning" style="padding:4px 8px;" onclick="editOrder('${o.id}')">编辑</button>
+          <button class="danger" style="padding:4px 8px;" onclick="deleteOrder('${o.id}')">删</button>
         </td>
       </tr>`;
     }).join('');
   }
 
-  // ========== 签收登记 (含搜索 R1) ==========
+  // 签收登记
   function quickReceiveById(orderId) {
     const order = data.orders.find(o => o.id === orderId);
     if(!order || order.receivedQty >= order.qty) return;
@@ -463,19 +611,14 @@
     order.status = 'received';
     order.receiveDate = new Date().toISOString().split('T')[0];
     if(order.soldQty === undefined) order.soldQty = 0;
-    saveData();
-    renderPendingItems();
-    renderOrderList();
+    saveData(); renderPendingItems(); renderOrderList();
   }
   function renderPendingItems() {
     const search = (document.getElementById('receiveSearch')?.value || '').toLowerCase();
     let pending = data.orders.filter(o => o.receivedQty < o.qty);
     if(search) pending = pending.filter(o => o.orderNo.toLowerCase().includes(search) || o.product.toLowerCase().includes(search));
     const tbody = document.querySelector('#pendingTable tbody');
-    if(pending.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">🎉 所有商品均已签收</td></tr>';
-      return;
-    }
+    if(pending.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty">🎉 全部签收完毕</td></tr>'; return; }
     tbody.innerHTML = pending.map(o => {
       const left = o.qty - o.receivedQty;
       return `<tr>
@@ -486,7 +629,7 @@
     }).join('');
   }
 
-  // ========== 销售出库 (含库存显示 S5) ==========
+  // 销售出库
   function getTotalStock(productName) {
     return data.orders.filter(o => o.product === productName && o.receivedQty > (o.soldQty||0))
       .reduce((sum, o) => sum + (o.receivedQty - (o.soldQty||0)), 0);
@@ -499,20 +642,8 @@
     const product = document.getElementById('saleProduct').value.trim();
     const qty = parseInt(document.getElementById('saleQty').value) || 0;
     const price = parseFloat(document.getElementById('salePrice').value) || 0;
-    // 更新库存提示
-    const stockSpan = document.getElementById('saleStockInfo');
-    if (product) {
-      const totalStock = getTotalStock(product);
-      stockSpan.innerHTML = `当前库存：${totalStock} 件`;
-    } else {
-      stockSpan.innerHTML = '';
-    }
-    if (!product || qty <= 0) {
-      document.getElementById('costPreview').innerText = '--';
-      document.getElementById('totalCostPreview').innerText = '--';
-      document.getElementById('estProfit').innerText = '--';
-      return;
-    }
+    document.getElementById('saleStockInfo').innerHTML = product ? `库存：${getTotalStock(product)} 件` : '';
+    if (!product || qty <= 0) { document.getElementById('costPreview').innerText = '--'; document.getElementById('totalCostPreview').innerText = '--'; document.getElementById('estProfit').innerText = '--'; return; }
     const stock = getAvailableStock(product);
     let remaining = qty, totalCost = 0;
     for (let order of stock) {
@@ -522,17 +653,10 @@
       remaining -= take;
       if (remaining === 0) break;
     }
-    if (remaining > 0) {
-      document.getElementById('costPreview').innerText = '库存不足';
-      document.getElementById('totalCostPreview').innerText = '--';
-      document.getElementById('estProfit').innerText = '--';
-      return;
-    }
-    const unitAvg = totalCost / qty;
-    const profit = price * qty - totalCost;
-    document.getElementById('costPreview').innerText = unitAvg.toFixed(2);
+    if (remaining > 0) { document.getElementById('costPreview').innerText = '库存不足'; document.getElementById('estProfit').innerText = '--'; return; }
+    document.getElementById('costPreview').innerText = (totalCost/qty).toFixed(2);
     document.getElementById('totalCostPreview').innerText = totalCost.toFixed(2);
-    document.getElementById('estProfit').innerText = profit.toFixed(2);
+    document.getElementById('estProfit').innerText = (price*qty - totalCost).toFixed(2);
   }
   function addSale() {
     const product = document.getElementById('saleProduct').value.trim();
@@ -551,10 +675,7 @@
       remaining -= take;
       if (remaining === 0) break;
     }
-    if (remaining > 0) {
-      const totalAvail = stock.reduce((s,o) => s + (o.receivedQty - (o.soldQty||0)), 0);
-      return alert(`库存不足，剩余 ${totalAvail} 件`);
-    }
+    if (remaining > 0) return alert(`库存不足，剩余 ${getTotalStock(product)} 件`);
     const profit = price * qty - totalCost;
     const sale = { id: genId(), product, qty, salePrice: price, totalCost, profit, saleDate, batches };
     for (let b of batches) {
@@ -564,12 +685,11 @@
     data.sales.push(sale); saveData();
     document.getElementById('saleQty').value = 1;
     document.getElementById('salePrice').value = '';
-    const remainStock = getTotalStock(product);
-    alert(`销售记录已保存！\n当前“${product}”剩余库存：${remainStock} 件`);
+    alert(`销售已保存！\n剩余库存：${getTotalStock(product)} 件`);
     renderSaleList(); updateAllDatalists(); updateSalePreview();
   }
   function deleteSale(id) {
-    if(!confirm('删除此销售记录将恢复库存，确定吗？')) return;
+    if(!confirm('删除此销售记录？')) return;
     const sale = data.sales.find(s => s.id === id);
     if(sale && sale.batches) {
       for (let b of sale.batches) {
@@ -586,12 +706,12 @@
     tbody.innerHTML = data.sales.map(s => `
       <tr>
         <td>${s.product}</td><td>${s.qty}</td><td>¥${s.salePrice.toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td>
-        <td style="color:${s.profit>=0?'#16a34a':'#b91c1c'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td>
+        <td style="color:${s.profit>=0?'#34c759':'#ff3b30'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td>
         <td><button class="danger" onclick="deleteSale('${s.id}')">删除</button></td>
       </tr>`).join('');
   }
 
-  // ========== 快递费 ==========
+  // 快递费
   function addShippingFee() {
     const date = document.getElementById('shippingDate').value;
     const amount = parseFloat(document.getElementById('shippingAmount').value);
@@ -611,11 +731,10 @@
     const tbody = document.querySelector('#shippingTable tbody');
     if(data.shippingFees.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty">暂无快递费记录</td></tr>'; return; }
     data.shippingFees.sort((a,b) => a.date.localeCompare(b.date));
-    tbody.innerHTML = data.shippingFees.map(f => `
-      <tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note || ''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
+    tbody.innerHTML = data.shippingFees.map(f => `<tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note||''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
   }
 
-  // ========== 快速入库 ==========
+  // 快速入库
   function toggleQuickForm() {
     const form = document.getElementById('quickStockForm');
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
@@ -627,8 +746,8 @@
     const price = parseFloat(document.getElementById('quickPrice').value);
     const date = document.getElementById('quickDate').value;
     const remark = document.getElementById('quickRemark').value.trim();
-    if(!account || !product || !qty || isNaN(price) || !date) return alert('请完整填写所有必填项');
-    const orderNo = '手动入库-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(Math.random()*1000);
+    if(!account || !product || !qty || isNaN(price) || !date) return alert('请完整填写');
+    const orderNo = '手动入库-'+Date.now().toString(36);
     const newOrder = { id: genId(), account, orderNo, product, qty, unitPrice: price, date, remark, receivedQty: qty, soldQty: 0, status: 'received', receiveDate: date };
     data.orders.push(newOrder);
     saveData();
@@ -642,7 +761,7 @@
     alert('入库成功！');
   }
 
-  // ========== 库存 (含搜索 K4) ==========
+  // 库存
   function renderStock() {
     const search = (document.getElementById('stockSearch')?.value || '').toLowerCase();
     let list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
@@ -657,14 +776,12 @@
     tbody.innerHTML = list.map(o => {
       const remain = o.receivedQty - (o.soldQty||0);
       totalCost += remain * o.unitPrice;
-      return `<tr>
-        <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.receivedQty}</td><td>${o.soldQty||0}</td><td><strong>${remain}</strong></td><td>¥${o.unitPrice.toFixed(2)}</td><td>${o.receiveDate||''}</td>
-      </tr>`;
+      return `<tr><td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.receivedQty}</td><td>${o.soldQty||0}</td><td><strong>${remain}</strong></td><td>¥${o.unitPrice.toFixed(2)}</td><td>${o.receiveDate||''}</td></tr>`;
     }).join('');
-    document.getElementById('stockTotalCost').innerHTML = `<div style="text-align:right; margin-top:8px;">📊 库存总成本：<strong style="font-size:1.2rem;">¥${totalCost.toFixed(2)}</strong></div>`;
+    document.getElementById('stockTotalCost').innerHTML = `<div style="text-align:right;margin-top:8px;">📊 库存总成本：<strong>¥${totalCost.toFixed(2)}</strong></div>`;
   }
 
-  // ========== 利润报表 (含按商品汇总 F1) ==========
+  // 利润报表
   function renderProfit() {
     const accountFilter = document.getElementById('profitAccount').value;
     const start = document.getElementById('profitStart').value;
@@ -682,26 +799,26 @@
     data.shippingFees.forEach(f => {
       if ((!start || f.date >= start) && (!end || f.date <= end)) shippingTotal += f.amount;
     });
-    const totalSalesAmount = sales.reduce((s,v) => s + v.salePrice * v.qty, 0);
+    const totalSales = sales.reduce((s,v) => s + v.salePrice * v.qty, 0);
     const totalCost = sales.reduce((s,v) => s + v.totalCost, 0);
-    const totalProfitBeforeShip = sales.reduce((s,v) => s + v.profit, 0);
-    const netProfit = totalProfitBeforeShip - shippingTotal;
+    const profitBeforeShip = sales.reduce((s,v) => s + v.profit, 0);
+    const netProfit = profitBeforeShip - shippingTotal;
+
     document.getElementById('profitSummary').innerHTML = `
-      <div class="stat-box"><div>总销售额</div><div class="stat-num">¥${totalSalesAmount.toFixed(2)}</div></div>
+      <div class="stat-box"><div>总销售额</div><div class="stat-num">¥${totalSales.toFixed(2)}</div></div>
       <div class="stat-box"><div>商品成本</div><div class="stat-num">¥${totalCost.toFixed(2)}</div></div>
-      <div class="stat-box"><div>快递费合计</div><div class="stat-num">¥${shippingTotal.toFixed(2)}</div></div>
-      <div class="stat-box"><div>净利润</div><div class="stat-num" style="color:${netProfit>=0?'#16a34a':'#b91c1c'}">¥${netProfit.toFixed(2)}</div></div>
+      <div class="stat-box"><div>运费合计</div><div class="stat-num">¥${shippingTotal.toFixed(2)}</div></div>
+      <div class="stat-box"><div>净利润</div><div class="stat-num" style="color:${netProfit>=0?'#34c759':'#ff3b30'}">¥${netProfit.toFixed(2)}</div></div>
     `;
+
     const tbody = document.querySelector('#profitDetailTable tbody');
     if(sales.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="empty">无数据</td></tr>';
       document.getElementById('profitGroupSummary').innerHTML = '';
       return;
     }
-    tbody.innerHTML = sales.map(s => `
-      <tr><td>${s.product}</td><td>${s.qty}</td><td>¥${(s.salePrice*s.qty).toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td><td style="color:${s.profit>=0?'#16a34a':'#b91c1c'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td></tr>`).join('');
+    tbody.innerHTML = sales.map(s => `<tr><td>${s.product}</td><td>${s.qty}</td><td>¥${(s.salePrice*s.qty).toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td><td style="color:${s.profit>=0?'#34c759':'#ff3b30'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td></tr>`).join('');
 
-    // 按商品汇总
     const groupMap = {};
     sales.forEach(s => {
       if (!groupMap[s.product]) groupMap[s.product] = { qty: 0, sales: 0, cost: 0, profit: 0 };
@@ -711,16 +828,16 @@
       groupMap[s.product].profit += s.profit;
     });
     const groupArray = Object.entries(groupMap).map(([k,v]) => ({ product: k, ...v }));
-    let groupHtml = '<h4 style="margin-bottom:8px;">📊 按商品汇总</h4>';
-    groupHtml += '<table><thead><tr><th>商品</th><th>总销量</th><th>总销售额</th><th>总成本</th><th>总利润</th></tr></thead><tbody>';
+    let html = '<h4 style="margin-top:16px;">📊 按商品汇总</h4>';
+    html += '<div class="table-wrapper"><table><thead><tr><th>商品</th><th>总销量</th><th>总销售额</th><th>总成本</th><th>总利润</th></tr></thead><tbody>';
     groupArray.forEach(g => {
-      groupHtml += `<tr><td>${g.product}</td><td>${g.qty}</td><td>¥${g.sales.toFixed(2)}</td><td>¥${g.cost.toFixed(2)}</td><td style="color:${g.profit>=0?'#16a34a':'#b91c1c'}">¥${g.profit.toFixed(2)}</td></tr>`;
+      html += `<tr><td>${g.product}</td><td>${g.qty}</td><td>¥${g.sales.toFixed(2)}</td><td>¥${g.cost.toFixed(2)}</td><td style="color:${g.profit>=0?'#34c759':'#ff3b30'}">¥${g.profit.toFixed(2)}</td></tr>`;
     });
-    groupHtml += '</tbody></table>';
-    document.getElementById('profitGroupSummary').innerHTML = groupHtml;
+    html += '</tbody></table></div>';
+    document.getElementById('profitGroupSummary').innerHTML = html;
   }
 
-  // ========== OCR ==========
+  // OCR
   const ocrImageInput = document.getElementById('ocrImageInput');
   ocrImageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -731,46 +848,25 @@
       document.getElementById('ocrPreview').style.display = 'block';
     };
     reader.readAsDataURL(file);
-    const statusDiv = document.getElementById('ocrStatus');
-    statusDiv.innerHTML = '⏳ 识别中，请稍后...';
+    document.getElementById('ocrStatus').innerHTML = '⏳ 识别中...';
     Tesseract.recognize(file, 'chi_sim', {
-      logger: (m) => {
-        if (m.status === 'recognizing text') statusDiv.innerHTML = `⏳ 识别进度：${Math.round(m.progress * 100)}%`;
-      }
+      logger: (m) => { if (m.status === 'recognizing text') document.getElementById('ocrStatus').innerHTML = `⏳ ${Math.round(m.progress*100)}%`; }
     }).then(({ data: { text } }) => {
-      statusDiv.innerHTML = '✅ 识别完成，信息已尝试填充。';
-      fillOrderDetails(text);
-    }).catch(err => {
-      statusDiv.innerHTML = '❌ 识别失败，请重试或手动输入。';
-    });
+      document.getElementById('ocrStatus').innerHTML = '✅ 识别完成';
+      let filled = false;
+      const orderNoMatch = text.match(/订单编号[:\s]*(\d{12,16})/);
+      if (orderNoMatch && orderNoMatch[1]) { document.getElementById('orderNo').value = orderNoMatch[1]; filled = true; }
+      const qtyMatch = text.match(/数量\s*[×xX]\s*(\d+)/);
+      if (qtyMatch && qtyMatch[1]) { document.getElementById('itemQty').value = qtyMatch[1]; filled = true; }
+      let priceMatch = text.match(/到手[¥￥]\s*(\d+\.?\d*)/);
+      if (!priceMatch) priceMatch = text.match(/合计[¥￥]\s*(\d+\.?\d*)/);
+      if (!priceMatch) priceMatch = text.match(/实付款[:\s]*.*?[¥￥]\s*(\d+\.?\d*)/);
+      if (priceMatch && priceMatch[1]) { document.getElementById('itemPrice').value = priceMatch[1]; filled = true; }
+      if (!filled) alert('未识别到订单信息，请手动输入');
+    }).catch(() => { document.getElementById('ocrStatus').innerHTML = '❌ 失败'; });
   });
 
-  function fillOrderDetails(rawText) {
-    let filled = false;
-    const orderNoMatch = rawText.match(/订单编号[:\s]*(\d{12,16})/);
-    if (orderNoMatch && orderNoMatch[1]) {
-      document.getElementById('orderNo').value = orderNoMatch[1];
-      document.getElementById('orderNo').classList.add('ocr-result-input');
-      filled = true;
-    }
-    const qtyMatch = rawText.match(/数量\s*[×xX]\s*(\d+)/);
-    if (qtyMatch && qtyMatch[1]) {
-      document.getElementById('itemQty').value = qtyMatch[1];
-      document.getElementById('itemQty').classList.add('ocr-result-input');
-      filled = true;
-    }
-    let priceMatch = rawText.match(/到手[¥￥]\s*(\d+\.?\d*)/);
-    if (!priceMatch) priceMatch = rawText.match(/合计[¥￥]\s*(\d+\.?\d*)/);
-    if (!priceMatch) priceMatch = rawText.match(/实付款[:\s]*.*?[¥￥]\s*(\d+\.?\d*)/);
-    if (priceMatch && priceMatch[1]) {
-      document.getElementById('itemPrice').value = priceMatch[1];
-      document.getElementById('itemPrice').classList.add('ocr-result-input');
-      filled = true;
-    }
-    if (!filled) alert('未能识别到订单号、数量或价格，请检查截图质量或手动输入。');
-  }
-
-  // ========== 标签页切换 ==========
+  // 标签切换
   function switchTab(name) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -784,7 +880,6 @@
     if(name==='tab-shipping') renderShippingFees();
   }
 
-  // 事件绑定
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
   document.getElementById('saleProduct').addEventListener('input', updateSalePreview);
   document.getElementById('saleQty').addEventListener('input', updateSalePreview);
