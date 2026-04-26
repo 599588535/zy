@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>进销存 · 个人版</title>
-  <!-- OCR 识别库 -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,11 +22,12 @@
     .col { flex: 1 1 180px; }
     label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 0.85rem; color: #444; }
     input, select, button { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; width: 100%; background: white; }
-    button { background: #2563eb; color: white; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; width: auto; padding: 10px 20px; }
+    button { background: #2563eb; color: white; border: none; font-weight: 600; cursor: pointer; width: auto; padding: 10px 20px; }
     button:hover { opacity: 0.9; }
     button.danger { background: #b91c1c; }
     button.secondary { background: #e5e7eb; color: #333; }
     button.success { background: #16a34a; }
+    button.warning { background: #f59e0b; color: white; }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.85rem; }
     th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
     td { padding: 8px 12px; border-bottom: 1px solid #eee; }
@@ -40,14 +40,16 @@
     .stat-num { font-size: 1.8rem; font-weight: 700; color: #111827; }
     .item-list { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
     .item-row { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-    .item-row input { width: auto; flex: 1; }
     .ocr-section { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 20px; background-color: #f9fafb; }
     .ocr-trigger-btn { background-color: #16a34a; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    .ocr-trigger-btn:hover { opacity: 0.9; }
     .ocr-preview-img { max-width: 100%; height: auto; margin-top: 15px; border: 1px solid #ccc; border-radius: 4px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
     .ocr-status { margin-top: 10px; font-size: 0.9rem; color: #555; }
     .ocr-result-input { background-color: #f0fdf4; border: 2px solid #86efac; }
     .quick-form { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px dashed #2563eb; }
+    .stock-info { margin-left: 8px; font-size: 0.85rem; color: #2563eb; font-weight: 500; }
+    .edit-panel { background: #fef9c3; padding: 12px; border-radius: 8px; margin-bottom: 12px; }
+    .group-summary { background: #f0fdf4; border-radius: 8px; padding: 12px; margin-top: 12px; }
+    .group-summary table { margin-top: 0; }
   </style>
 </head>
 <body>
@@ -60,7 +62,7 @@
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
-  <p style="color:#666; margin-bottom: 8px;">个人版 · OCR识别 + 混合采购 + 快速入库</p>
+  <p style="color:#666; margin-bottom: 8px;">个人版 · OCR识别 + 混合采购 + 快速入库 + 搜索/编辑/汇总</p>
 
   <div class="tabs">
     <div class="tab active" data-tab="tab-accounts">👤 账号</div>
@@ -84,7 +86,7 @@
     </table>
   </div>
 
-  <!-- 采购录入（包含OCR） -->
+  <!-- 采购录入 -->
   <div id="tab-purchase-order" class="panel">
     <div class="ocr-section">
       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -125,27 +127,30 @@
       <div><button class="secondary" onclick="renderOrderList()">刷新</button></div>
     </div>
     <table id="orderTable">
-      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购</th><th>已签收</th><th>状态</th><th>日期</th><th></th></tr></thead>
+      <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购</th><th>已签收</th><th>状态</th><th>日期</th><th>操作</th></tr></thead>
       <tbody></tbody>
     </table>
+    <!-- 编辑弹窗占位 -->
+    <div id="editOrderPanel" style="display:none;" class="edit-panel"></div>
   </div>
 
   <!-- 签收登记 -->
   <div id="tab-receive" class="panel">
-    <div class="row" style="justify-content: flex-end;">
+    <div class="row">
+      <div class="col"><input type="text" id="receiveSearch" placeholder="🔍 搜索订单号或商品"></div>
       <button class="secondary" onclick="renderPendingItems()">刷新</button>
     </div>
     <table id="pendingTable">
       <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购数</th><th>已签收</th><th>未签收</th><th>下单日期</th><th>操作</th></tr></thead>
       <tbody></tbody>
     </table>
-    <p style="color:#666; margin-top:12px;">💡 逐条签收，每条商品单独确认，点击"签收"后整条商品全数入库。</p>
+    <p style="color:#666; margin-top:12px;">💡 逐条签收，每条商品单独确认，点击“签收”后整条商品全数入库。</p>
   </div>
 
   <!-- 销售出库 -->
   <div id="tab-sale" class="panel">
     <div class="row">
-      <div class="col"><label>商品名称</label><input type="text" id="saleProduct" list="saleProductList" autocomplete="off" placeholder="选择或输入商品"></div>
+      <div class="col"><label>商品名称</label><input type="text" id="saleProduct" list="saleProductList" autocomplete="off" placeholder="选择或输入商品"><span id="saleStockInfo" class="stock-info"></span></div>
       <datalist id="saleProductList"></datalist>
       <div class="col"><label>数量</label><input type="number" id="saleQty" value="1" min="1"></div>
       <div class="col"><label>售价 (元/件)</label><input type="number" id="salePrice" step="0.01" placeholder="拼多多卖价"></div>
@@ -181,20 +186,18 @@
     </table>
   </div>
 
-  <!-- 库存总览（含快速入库） -->
+  <!-- 库存总览 -->
   <div id="tab-stock" class="panel">
-    <div class="row" style="justify-content: space-between;">
+    <div class="row">
+      <div class="col"><input type="text" id="stockSearch" placeholder="🔍 搜索商品名称"></div>
       <button class="success" id="toggleQuickFormBtn" onclick="toggleQuickForm()">➕ 快速入库</button>
       <button class="secondary" onclick="renderStock()">刷新</button>
     </div>
-
-    <!-- 快速入库表单 -->
     <div id="quickStockForm" class="quick-form" style="display: none;">
       <h4>📥 直接新增库存</h4>
       <div class="row">
         <div class="col"><label>账号</label><select id="quickAccount"></select></div>
         <div class="col"><label>商品名称</label><input type="text" id="quickProduct" list="productList" autocomplete="off" placeholder="点此选择或输入"></div>
-        <datalist id="productList"></datalist>
         <div class="col"><label>数量</label><input type="number" id="quickQty" value="1" min="1"></div>
         <div class="col"><label>进价 (元/件)</label><input type="number" id="quickPrice" step="0.01" placeholder="单价"></div>
         <div class="col"><label>入库日期</label><input type="date" id="quickDate"></div>
@@ -204,7 +207,6 @@
         <div><button onclick="quickAddStock()">✅ 确认入库</button></div>
       </div>
     </div>
-
     <table id="stockTable">
       <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本</th><th>签收日</th></tr></thead>
       <tbody></tbody>
@@ -225,6 +227,8 @@
       <thead><tr><th>商品</th><th>数量</th><th>销售额</th><th>商品成本</th><th>利润(未扣运费)</th><th>日期</th></tr></thead>
       <tbody></tbody>
     </table>
+    <!-- 按商品汇总 -->
+    <div id="profitGroupSummary" class="group-summary" style="margin-top:16px;"></div>
   </div>
 </div>
 
@@ -317,7 +321,7 @@
     document.getElementById('saleProductList').innerHTML = html;
   }
 
-  // 账号管理
+  // ========== 账号 ==========
   function addAccount() {
     const name = document.getElementById('newAccountName').value.trim();
     if(!name) return alert('请输入名称');
@@ -335,7 +339,7 @@
     document.querySelector('#accountTable tbody').innerHTML = data.accounts.map(a => `<tr><td>${a}</td><td><button class="danger" onclick="deleteAccount('${a}')">删除</button></td></tr>`).join('');
   }
 
-  // 采购录入
+  // ========== 采购录入 ==========
   function clearCart() { currentCart = []; renderCart(); }
   function addItemToCart() {
     const product = document.getElementById('itemProduct').value.trim();
@@ -376,6 +380,56 @@
     updateAllDatalists(); renderOrderList();
     alert('采购单已保存！');
   }
+
+  // ---- 编辑采购单 (P2) ----
+  function editOrder(id) {
+    const order = data.orders.find(o => o.id === id);
+    if (!order) return;
+    const panel = document.getElementById('editOrderPanel');
+    panel.style.display = 'block';
+    panel.innerHTML = `
+      <h4>✏️ 编辑采购记录</h4>
+      <div class="row">
+        <div class="col"><label>账号</label><select id="editAccount">${data.accounts.map(a => `<option value="${a}" ${a===order.account?'selected':''}>${a}</option>`).join('')}</select></div>
+        <div class="col"><label>订单号</label><input type="text" id="editOrderNo" value="${order.orderNo}"></div>
+        <div class="col"><label>商品</label><input type="text" id="editProduct" value="${order.product}"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>数量</label><input type="number" id="editQty" value="${order.qty}" min="${order.receivedQty || 0}"></div>
+        <div class="col"><label>进价</label><input type="number" id="editPrice" step="0.01" value="${order.unitPrice}"></div>
+        <div class="col"><label>日期</label><input type="date" id="editDate" value="${order.date}"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>备注</label><input type="text" id="editRemark" value="${order.remark || ''}"></div>
+      </div>
+      <div class="row">
+        <button onclick="saveEditOrder('${order.id}')">💾 保存修改</button>
+        <button class="secondary" onclick="document.getElementById('editOrderPanel').style.display='none'">取消</button>
+      </div>
+    `;
+  }
+  function saveEditOrder(id) {
+    const order = data.orders.find(o => o.id === id);
+    if (!order) return;
+    const newQty = parseInt(document.getElementById('editQty').value);
+    const newPrice = parseFloat(document.getElementById('editPrice').value);
+    if (!newQty || isNaN(newPrice)) return alert('数量和进价必填');
+    if (newQty < (order.receivedQty || 0)) return alert(`数量不能小于已签收数量(${order.receivedQty})`);
+    order.account = document.getElementById('editAccount').value;
+    order.orderNo = document.getElementById('editOrderNo').value.trim();
+    order.product = document.getElementById('editProduct').value.trim();
+    order.qty = newQty;
+    order.unitPrice = newPrice;
+    order.date = document.getElementById('editDate').value;
+    order.remark = document.getElementById('editRemark').value.trim();
+    saveData();
+    document.getElementById('editOrderPanel').style.display = 'none';
+    updateAllDatalists();
+    renderOrderList();
+    renderPendingItems();
+    alert('修改已保存');
+  }
+
   function deleteOrder(id) {
     if(!confirm('删除此采购记录？')) return;
     data.orders = data.orders.filter(o => o.id !== id);
@@ -393,12 +447,15 @@
       return `<tr>
         <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td>
         <td>${badge}</td><td>${o.date}</td>
-        <td><button class="danger" onclick="deleteOrder('${o.id}')">删除</button></td>
+        <td>
+          <button class="warning" style="padding:4px 10px; margin-right:4px;" onclick="editOrder('${o.id}')">编辑</button>
+          <button class="danger" style="padding:4px 10px;" onclick="deleteOrder('${o.id}')">删除</button>
+        </td>
       </tr>`;
     }).join('');
   }
 
-  // 签收登记
+  // ========== 签收登记 (含搜索 R1) ==========
   function quickReceiveById(orderId) {
     const order = data.orders.find(o => o.id === orderId);
     if(!order || order.receivedQty >= order.qty) return;
@@ -411,7 +468,9 @@
     renderOrderList();
   }
   function renderPendingItems() {
-    const pending = data.orders.filter(o => o.receivedQty < o.qty);
+    const search = (document.getElementById('receiveSearch')?.value || '').toLowerCase();
+    let pending = data.orders.filter(o => o.receivedQty < o.qty);
+    if(search) pending = pending.filter(o => o.orderNo.toLowerCase().includes(search) || o.product.toLowerCase().includes(search));
     const tbody = document.querySelector('#pendingTable tbody');
     if(pending.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty">🎉 所有商品均已签收</td></tr>';
@@ -427,7 +486,11 @@
     }).join('');
   }
 
-  // 销售出库
+  // ========== 销售出库 (含库存显示 S5) ==========
+  function getTotalStock(productName) {
+    return data.orders.filter(o => o.product === productName && o.receivedQty > (o.soldQty||0))
+      .reduce((sum, o) => sum + (o.receivedQty - (o.soldQty||0)), 0);
+  }
   function getAvailableStock(productName) {
     return data.orders.filter(o => o.product === productName && o.receivedQty > (o.soldQty||0))
       .sort((a,b) => (a.receiveDate||a.date).localeCompare(b.receiveDate||b.date));
@@ -436,6 +499,14 @@
     const product = document.getElementById('saleProduct').value.trim();
     const qty = parseInt(document.getElementById('saleQty').value) || 0;
     const price = parseFloat(document.getElementById('salePrice').value) || 0;
+    // 更新库存提示
+    const stockSpan = document.getElementById('saleStockInfo');
+    if (product) {
+      const totalStock = getTotalStock(product);
+      stockSpan.innerHTML = `当前库存：${totalStock} 件`;
+    } else {
+      stockSpan.innerHTML = '';
+    }
     if (!product || qty <= 0) {
       document.getElementById('costPreview').innerText = '--';
       document.getElementById('totalCostPreview').innerText = '--';
@@ -493,6 +564,8 @@
     data.sales.push(sale); saveData();
     document.getElementById('saleQty').value = 1;
     document.getElementById('salePrice').value = '';
+    const remainStock = getTotalStock(product);
+    alert(`销售记录已保存！\n当前“${product}”剩余库存：${remainStock} 件`);
     renderSaleList(); updateAllDatalists(); updateSalePreview();
   }
   function deleteSale(id) {
@@ -518,7 +591,7 @@
       </tr>`).join('');
   }
 
-  // 快递费
+  // ========== 快递费 ==========
   function addShippingFee() {
     const date = document.getElementById('shippingDate').value;
     const amount = parseFloat(document.getElementById('shippingAmount').value);
@@ -542,12 +615,11 @@
       <tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note || ''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
   }
 
-  // 快速入库
+  // ========== 快速入库 ==========
   function toggleQuickForm() {
     const form = document.getElementById('quickStockForm');
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
   }
-
   function quickAddStock() {
     const account = document.getElementById('quickAccount').value;
     const product = document.getElementById('quickProduct').value.trim();
@@ -555,15 +627,9 @@
     const price = parseFloat(document.getElementById('quickPrice').value);
     const date = document.getElementById('quickDate').value;
     const remark = document.getElementById('quickRemark').value.trim();
-
-    if(!account || !product || !qty || isNaN(price) || !date) {
-      return alert('请完整填写所有必填项');
-    }
+    if(!account || !product || !qty || isNaN(price) || !date) return alert('请完整填写所有必填项');
     const orderNo = '手动入库-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(Math.random()*1000);
-    const newOrder = {
-      id: genId(), account, orderNo, product, qty, unitPrice: price, date, remark,
-      receivedQty: qty, soldQty: 0, status: 'received', receiveDate: date
-    };
+    const newOrder = { id: genId(), account, orderNo, product, qty, unitPrice: price, date, remark, receivedQty: qty, soldQty: 0, status: 'received', receiveDate: date };
     data.orders.push(newOrder);
     saveData();
     document.getElementById('quickProduct').value = '';
@@ -576,9 +642,11 @@
     alert('入库成功！');
   }
 
-  // 库存
+  // ========== 库存 (含搜索 K4) ==========
   function renderStock() {
-    const list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
+    const search = (document.getElementById('stockSearch')?.value || '').toLowerCase();
+    let list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
+    if(search) list = list.filter(o => o.product.toLowerCase().includes(search));
     const tbody = document.querySelector('#stockTable tbody');
     let totalCost = 0;
     if(list.length===0) {
@@ -596,7 +664,7 @@
     document.getElementById('stockTotalCost').innerHTML = `<div style="text-align:right; margin-top:8px;">📊 库存总成本：<strong style="font-size:1.2rem;">¥${totalCost.toFixed(2)}</strong></div>`;
   }
 
-  // 利润
+  // ========== 利润报表 (含按商品汇总 F1) ==========
   function renderProfit() {
     const accountFilter = document.getElementById('profitAccount').value;
     const start = document.getElementById('profitStart').value;
@@ -625,12 +693,34 @@
       <div class="stat-box"><div>净利润</div><div class="stat-num" style="color:${netProfit>=0?'#16a34a':'#b91c1c'}">¥${netProfit.toFixed(2)}</div></div>
     `;
     const tbody = document.querySelector('#profitDetailTable tbody');
-    if(sales.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty">无数据</td></tr>'; return; }
+    if(sales.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">无数据</td></tr>';
+      document.getElementById('profitGroupSummary').innerHTML = '';
+      return;
+    }
     tbody.innerHTML = sales.map(s => `
       <tr><td>${s.product}</td><td>${s.qty}</td><td>¥${(s.salePrice*s.qty).toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td><td style="color:${s.profit>=0?'#16a34a':'#b91c1c'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td></tr>`).join('');
+
+    // 按商品汇总
+    const groupMap = {};
+    sales.forEach(s => {
+      if (!groupMap[s.product]) groupMap[s.product] = { qty: 0, sales: 0, cost: 0, profit: 0 };
+      groupMap[s.product].qty += s.qty;
+      groupMap[s.product].sales += s.salePrice * s.qty;
+      groupMap[s.product].cost += s.totalCost;
+      groupMap[s.product].profit += s.profit;
+    });
+    const groupArray = Object.entries(groupMap).map(([k,v]) => ({ product: k, ...v }));
+    let groupHtml = '<h4 style="margin-bottom:8px;">📊 按商品汇总</h4>';
+    groupHtml += '<table><thead><tr><th>商品</th><th>总销量</th><th>总销售额</th><th>总成本</th><th>总利润</th></tr></thead><tbody>';
+    groupArray.forEach(g => {
+      groupHtml += `<tr><td>${g.product}</td><td>${g.qty}</td><td>¥${g.sales.toFixed(2)}</td><td>¥${g.cost.toFixed(2)}</td><td style="color:${g.profit>=0?'#16a34a':'#b91c1c'}">¥${g.profit.toFixed(2)}</td></tr>`;
+    });
+    groupHtml += '</tbody></table>';
+    document.getElementById('profitGroupSummary').innerHTML = groupHtml;
   }
 
-  // OCR
+  // ========== OCR ==========
   const ocrImageInput = document.getElementById('ocrImageInput');
   ocrImageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -680,7 +770,7 @@
     if (!filled) alert('未能识别到订单号、数量或价格，请检查截图质量或手动输入。');
   }
 
-  // 标签页切换
+  // ========== 标签页切换 ==========
   function switchTab(name) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -694,16 +784,15 @@
     if(name==='tab-shipping') renderShippingFees();
   }
 
+  // 事件绑定
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
   document.getElementById('saleProduct').addEventListener('input', updateSalePreview);
   document.getElementById('saleQty').addEventListener('input', updateSalePreview);
   document.getElementById('salePrice').addEventListener('input', updateSalePreview);
   document.getElementById('orderSearch')?.addEventListener('input', renderOrderList);
-
-  // 快速入库的商品名称焦点时刷新记忆列表
-  document.getElementById('quickProduct').addEventListener('focus', () => {
-    updateAllDatalists();
-  });
+  document.getElementById('receiveSearch')?.addEventListener('input', renderPendingItems);
+  document.getElementById('stockSearch')?.addEventListener('input', renderStock);
+  document.getElementById('quickProduct').addEventListener('focus', updateAllDatalists);
 
   // 初始化
   loadData();
