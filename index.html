@@ -47,6 +47,7 @@
     .ocr-preview-img { max-width: 100%; height: auto; margin-top: 15px; border: 1px solid #ccc; border-radius: 4px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
     .ocr-status { margin-top: 10px; font-size: 0.9rem; color: #555; }
     .ocr-result-input { background-color: #f0fdf4; border: 2px solid #86efac; }
+    .quick-form { background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px dashed #2563eb; }
   </style>
 </head>
 <body>
@@ -59,7 +60,7 @@
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
-  <p style="color:#666; margin-bottom: 8px;">个人版 · OCR图片识别 + 混合采购 + 逐条签收</p>
+  <p style="color:#666; margin-bottom: 8px;">个人版 · OCR识别 + 混合采购 + 快速入库</p>
 
   <div class="tabs">
     <div class="tab active" data-tab="tab-accounts">👤 账号</div>
@@ -85,7 +86,6 @@
 
   <!-- 采购录入（包含OCR） -->
   <div id="tab-purchase-order" class="panel">
-    <!-- OCR 图片识别模块 -->
     <div class="ocr-section">
       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
         <input type="file" id="ocrImageInput" accept="image/*" style="display: none;">
@@ -181,11 +181,30 @@
     </table>
   </div>
 
-  <!-- 库存总览 -->
+  <!-- 库存总览（含快速入库） -->
   <div id="tab-stock" class="panel">
-    <div class="row" style="justify-content: flex-end;">
+    <div class="row" style="justify-content: space-between;">
+      <button class="success" id="toggleQuickFormBtn" onclick="toggleQuickForm()">➕ 快速入库</button>
       <button class="secondary" onclick="renderStock()">刷新</button>
     </div>
+
+    <!-- 快速入库表单 -->
+    <div id="quickStockForm" class="quick-form" style="display: none;">
+      <h4>📥 直接新增库存</h4>
+      <div class="row">
+        <div class="col"><label>账号</label><select id="quickAccount"></select></div>
+        <div class="col"><label>商品名称</label><input type="text" id="quickProduct" list="productList" autocomplete="off" placeholder="点此选择或输入"></div>
+        <datalist id="productList"></datalist>
+        <div class="col"><label>数量</label><input type="number" id="quickQty" value="1" min="1"></div>
+        <div class="col"><label>进价 (元/件)</label><input type="number" id="quickPrice" step="0.01" placeholder="单价"></div>
+        <div class="col"><label>入库日期</label><input type="date" id="quickDate"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>备注</label><input type="text" id="quickRemark" placeholder="选填"></div>
+        <div><button onclick="quickAddStock()">✅ 确认入库</button></div>
+      </div>
+    </div>
+
     <table id="stockTable">
       <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本</th><th>签收日</th></tr></thead>
       <tbody></tbody>
@@ -210,16 +229,13 @@
 </div>
 
 <script>
-  // ⚠️ 数据存储键名固定，永不更改，保你数据安全
   const STORAGE_KEY = 'JD_INVENTORY_V6';
-
   let data = {
     accounts: ['京东账号A', '京东账号B', '京东账号C', '京东账号D', '京东账号E', '京东账号F', '京东账号G'],
     orders: [],
     sales: [],
     shippingFees: []
   };
-
   let currentCart = [];
 
   function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -237,11 +253,11 @@
     document.getElementById('orderDate').valueAsDate = new Date();
     document.getElementById('saleDate').valueAsDate = new Date();
     document.getElementById('shippingDate').valueAsDate = new Date();
+    document.getElementById('quickDate').valueAsDate = new Date();
     updateAllDatalists();
     clearCart();
   }
 
-  // 导出导入
   function exportData() {
     const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
@@ -287,6 +303,8 @@
   function refreshSelects() {
     const orderAccount = document.getElementById('orderAccount');
     if(orderAccount) { orderAccount.innerHTML = ''; data.accounts.forEach(a => orderAccount.innerHTML += `<option value="${a}">${a}</option>`); }
+    const quickAccount = document.getElementById('quickAccount');
+    if(quickAccount) { quickAccount.innerHTML = ''; data.accounts.forEach(a => quickAccount.innerHTML += `<option value="${a}">${a}</option>`); }
     const profitAccount = document.getElementById('profitAccount');
     if(profitAccount) { profitAccount.innerHTML = '<option value="all">全部</option>'; data.accounts.forEach(a => profitAccount.innerHTML += `<option value="${a}">${a}</option>`); }
   }
@@ -380,7 +398,7 @@
     }).join('');
   }
 
-  // 签收登记（逐条签收）
+  // 签收登记
   function quickReceiveById(orderId) {
     const order = data.orders.find(o => o.id === orderId);
     if(!order || order.receivedQty >= order.qty) return;
@@ -524,6 +542,40 @@
       <tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note || ''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
   }
 
+  // 快速入库
+  function toggleQuickForm() {
+    const form = document.getElementById('quickStockForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function quickAddStock() {
+    const account = document.getElementById('quickAccount').value;
+    const product = document.getElementById('quickProduct').value.trim();
+    const qty = parseInt(document.getElementById('quickQty').value);
+    const price = parseFloat(document.getElementById('quickPrice').value);
+    const date = document.getElementById('quickDate').value;
+    const remark = document.getElementById('quickRemark').value.trim();
+
+    if(!account || !product || !qty || isNaN(price) || !date) {
+      return alert('请完整填写所有必填项');
+    }
+    const orderNo = '手动入库-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(Math.random()*1000);
+    const newOrder = {
+      id: genId(), account, orderNo, product, qty, unitPrice: price, date, remark,
+      receivedQty: qty, soldQty: 0, status: 'received', receiveDate: date
+    };
+    data.orders.push(newOrder);
+    saveData();
+    document.getElementById('quickProduct').value = '';
+    document.getElementById('quickQty').value = 1;
+    document.getElementById('quickPrice').value = '';
+    document.getElementById('quickRemark').value = '';
+    document.getElementById('quickDate').valueAsDate = new Date();
+    updateAllDatalists();
+    renderStock();
+    alert('入库成功！');
+  }
+
   // 库存
   function renderStock() {
     const list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
@@ -578,83 +630,54 @@
       <tr><td>${s.product}</td><td>${s.qty}</td><td>¥${(s.salePrice*s.qty).toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td><td style="color:${s.profit>=0?'#16a34a':'#b91c1c'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td></tr>`).join('');
   }
 
-  // ==================== OCR 图片识别 ====================
+  // OCR
   const ocrImageInput = document.getElementById('ocrImageInput');
   ocrImageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // 显示图片预览
     const reader = new FileReader();
     reader.onload = (loadEvent) => {
-      const previewImg = document.getElementById('ocrPreview');
-      previewImg.src = loadEvent.target.result;
-      previewImg.style.display = 'block';
+      document.getElementById('ocrPreview').src = loadEvent.target.result;
+      document.getElementById('ocrPreview').style.display = 'block';
     };
     reader.readAsDataURL(file);
-
-    // 开始识别
     const statusDiv = document.getElementById('ocrStatus');
     statusDiv.innerHTML = '⏳ 识别中，请稍后...';
-
-    Tesseract.recognize(
-      file,
-      'chi_sim',
-      {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            statusDiv.innerHTML = `⏳ 识别进度：${Math.round(m.progress * 100)}%`;
-          }
-        },
+    Tesseract.recognize(file, 'chi_sim', {
+      logger: (m) => {
+        if (m.status === 'recognizing text') statusDiv.innerHTML = `⏳ 识别进度：${Math.round(m.progress * 100)}%`;
       }
-    )
-      .then(({ data: { text } }) => {
-        statusDiv.innerHTML = '✅ 识别完成，信息已尝试填充。';
-        console.log('完整识别结果：', text);
-        fillOrderDetails(text);
-      })
-      .catch((err) => {
-        statusDiv.innerHTML = '❌ 识别失败，请重试或手动输入。';
-        console.error('OCR Error:', err);
-      });
+    }).then(({ data: { text } }) => {
+      statusDiv.innerHTML = '✅ 识别完成，信息已尝试填充。';
+      fillOrderDetails(text);
+    }).catch(err => {
+      statusDiv.innerHTML = '❌ 识别失败，请重试或手动输入。';
+    });
   });
 
   function fillOrderDetails(rawText) {
     let filled = false;
-
-    // 1. 提取订单编号 (京东订单号通常是12-16位数字)
     const orderNoMatch = rawText.match(/订单编号[:\s]*(\d{12,16})/);
     if (orderNoMatch && orderNoMatch[1]) {
       document.getElementById('orderNo').value = orderNoMatch[1];
       document.getElementById('orderNo').classList.add('ocr-result-input');
       filled = true;
     }
-
-    // 2. 提取数量 (匹配"数量 ×"后面的数字)
     const qtyMatch = rawText.match(/数量\s*[×xX]\s*(\d+)/);
     if (qtyMatch && qtyMatch[1]) {
       document.getElementById('itemQty').value = qtyMatch[1];
       document.getElementById('itemQty').classList.add('ocr-result-input');
       filled = true;
     }
-
-    // 3. 提取到手价 (优先匹配"到手¥"，其次匹配合计金额)
     let priceMatch = rawText.match(/到手[¥￥]\s*(\d+\.?\d*)/);
-    if (!priceMatch) {
-      priceMatch = rawText.match(/合计[¥￥]\s*(\d+\.?\d*)/);
-    }
-    if (!priceMatch) {
-      priceMatch = rawText.match(/实付款[:\s]*.*?[¥￥]\s*(\d+\.?\d*)/);
-    }
+    if (!priceMatch) priceMatch = rawText.match(/合计[¥￥]\s*(\d+\.?\d*)/);
+    if (!priceMatch) priceMatch = rawText.match(/实付款[:\s]*.*?[¥￥]\s*(\d+\.?\d*)/);
     if (priceMatch && priceMatch[1]) {
       document.getElementById('itemPrice').value = priceMatch[1];
       document.getElementById('itemPrice').classList.add('ocr-result-input');
       filled = true;
     }
-
-    if (!filled) {
-      alert('未能识别到订单号、数量或价格，请检查截图质量或手动输入。');
-    }
+    if (!filled) alert('未能识别到订单号、数量或价格，请检查截图质量或手动输入。');
   }
 
   // 标签页切换
@@ -677,12 +700,18 @@
   document.getElementById('salePrice').addEventListener('input', updateSalePreview);
   document.getElementById('orderSearch')?.addEventListener('input', renderOrderList);
 
+  // 快速入库的商品名称焦点时刷新记忆列表
+  document.getElementById('quickProduct').addEventListener('focus', () => {
+    updateAllDatalists();
+  });
+
   // 初始化
   loadData();
   refreshAllUI();
   document.getElementById('orderDate').valueAsDate = new Date();
   document.getElementById('saleDate').valueAsDate = new Date();
   document.getElementById('shippingDate').valueAsDate = new Date();
+  document.getElementById('quickDate').valueAsDate = new Date();
   if(document.getElementById('profitEnd')) document.getElementById('profitEnd').valueAsDate = new Date();
 </script>
 </body>
