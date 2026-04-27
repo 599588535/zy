@@ -17,7 +17,7 @@
       --ios-orange: #ff9500;
       --ios-separator: #e5e5ea;
       --ios-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      --ios-radius: 14px;
+      --ios-radius: 12px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -26,7 +26,6 @@
       color: var(--ios-text);
       -webkit-font-smoothing: antialiased;
       padding: 0;
-      overflow-x: hidden;
     }
 
     .header {
@@ -36,47 +35,44 @@
       background: rgba(242,242,247,0.85);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      padding: 10px 14px;
+      padding: 8px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--ios-separator);
     }
-    .header h1 {
-      font-size: 1.3rem;
-      font-weight: 700;
-    }
-    .sync-btns { display: flex; gap: 6px; }
+    .header h1 { font-size: 1.2rem; font-weight: 700; }
+    .sync-btns { display: flex; gap: 4px; }
     .sync-btns button {
       background: var(--ios-card);
       border: none;
-      padding: 7px 14px;
-      border-radius: 20px;
-      font-size: 0.8rem;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 0.78rem;
       font-weight: 500;
       color: var(--ios-blue);
       box-shadow: var(--ios-shadow);
       cursor: pointer;
     }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 8px 12px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 6px 8px; }
 
     .tabs {
       display: flex;
       flex-wrap: nowrap;
       overflow-x: auto;
-      gap: 6px;
-      padding: 6px 0 8px;
+      gap: 4px;
+      padding: 4px 0 6px;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
     }
     .tabs::-webkit-scrollbar { display: none; }
     .tab {
       flex: 0 0 auto;
-      padding: 8px 16px;
+      padding: 6px 14px;
       background: var(--ios-card);
-      border-radius: 20px;
-      font-size: 0.8rem;
+      border-radius: 16px;
+      font-size: 0.78rem;
       font-weight: 500;
       color: var(--ios-text);
       box-shadow: var(--ios-shadow);
@@ -91,34 +87,34 @@
       font-weight: 600;
     }
 
-    .panel { display: none; margin-top: 6px; }
+    .panel { display: none; margin-top: 4px; }
     .panel.active { display: block; }
 
     .card {
       background: var(--ios-card);
       border-radius: var(--ios-radius);
-      padding: 14px 12px;
-      margin-bottom: 12px;
+      padding: 10px 8px;
+      margin-bottom: 8px;
       box-shadow: var(--ios-shadow);
     }
 
-    .row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: center; }
-    .col { flex: 1 1 160px; min-width: 120px; }
+    .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
+    .col { flex: 1 1 100px; min-width: 80px; }
 
     label {
       display: block;
       font-weight: 500;
-      margin-bottom: 4px;
-      font-size: 0.75rem;
+      margin-bottom: 2px;
+      font-size: 0.68rem;
       color: var(--ios-secondary);
       text-transform: uppercase;
     }
     input, select {
       width: 100%;
-      padding: 12px 12px;
+      padding: 8px 8px;
       border: 1px solid var(--ios-separator);
-      border-radius: 10px;
-      font-size: 0.9rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
       background: #f9f9f9;
       color: var(--ios-text);
     }
@@ -126,16 +122,15 @@
       outline: none;
       border-color: var(--ios-blue);
       background: white;
-      box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
     }
     button {
-      padding: 11px 18px;
+      padding: 8px 14px;
       background: var(--ios-blue);
       color: white;
       border: none;
       font-weight: 600;
-      border-radius: 10px;
-      font-size: 0.9rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
     }
@@ -144,87 +139,87 @@
     button.success { background: var(--ios-green); }
     button.warning { background: var(--ios-orange); color: white; }
 
+    /* 表格完全无滚动，自适应宽度 */
     .table-wrapper {
       width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
       border-radius: var(--ios-radius);
       box-shadow: var(--ios-shadow);
+      overflow: hidden;
     }
     table {
       width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      font-size: 0.8rem;
+      border-collapse: collapse;
+      font-size: 0.72rem;
       background: var(--ios-card);
-      min-width: 600px;
+      table-layout: auto;
     }
     th {
       background: #f9f9f9;
-      padding: 10px 12px;
+      padding: 6px 4px;
       text-align: left;
       font-weight: 600;
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: var(--ios-secondary);
       text-transform: uppercase;
       border-bottom: 1px solid var(--ios-separator);
       white-space: nowrap;
     }
     td {
-      padding: 10px 12px;
+      padding: 6px 4px;
       border-bottom: 1px solid var(--ios-separator);
       white-space: nowrap;
+      font-size: 0.7rem;
     }
     tr:last-child td { border-bottom: none; }
 
     .badge {
       display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.65rem;
       font-weight: 600;
     }
     .badge-warning { background: #fff3cd; color: #856404; }
     .badge-success { background: #d4edda; color: #155724; }
 
-    hr { margin: 16px 0; border: 0.5px solid var(--ios-separator); }
-    .empty { color: var(--ios-secondary); text-align: center; padding: 30px; }
+    hr { margin: 10px 0; border: 0.5px solid var(--ios-separator); }
+    .empty { color: var(--ios-secondary); text-align: center; padding: 20px; font-size: 0.8rem; }
 
     .stat-box {
       background: var(--ios-card);
       border-radius: var(--ios-radius);
-      padding: 14px;
+      padding: 8px 10px;
       display: inline-block;
-      margin: 4px;
-      min-width: 100px;
+      margin: 2px;
+      min-width: 70px;
       box-shadow: var(--ios-shadow);
       text-align: center;
     }
-    .stat-num { font-size: 1.5rem; font-weight: 700; margin-top: 4px; }
+    .stat-num { font-size: 1.1rem; font-weight: 700; margin-top: 2px; }
 
-    .item-list { background: #f9f9f9; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
-    .item-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+    .item-list { background: #f9f9f9; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+    .item-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; flex-wrap: wrap; font-size: 0.78rem; }
 
     .ocr-section {
       background: var(--ios-card);
       border-radius: var(--ios-radius);
-      padding: 14px;
-      margin-bottom: 16px;
+      padding: 10px;
+      margin-bottom: 10px;
       box-shadow: var(--ios-shadow);
     }
-    .ocr-preview-img { max-width: 100%; border-radius: 10px; margin-top: 10px; }
-    .ocr-status { font-size: 0.8rem; color: var(--ios-secondary); margin-top: 6px; }
+    .ocr-preview-img { max-width: 100%; border-radius: 8px; margin-top: 8px; }
+    .ocr-status { font-size: 0.75rem; color: var(--ios-secondary); margin-top: 4px; }
 
     .quick-form {
       background: var(--ios-card);
       border-radius: var(--ios-radius);
-      padding: 14px;
-      margin-bottom: 14px;
+      padding: 10px;
+      margin-bottom: 10px;
       box-shadow: var(--ios-shadow);
     }
-    .stock-info { font-size: 0.8rem; color: var(--ios-blue); margin-left: 4px; font-weight: 500; }
-    .edit-panel { background: #fff3cd; padding: 10px; border-radius: 10px; margin: 10px 0; }
-    .group-summary { margin-top: 14px; }
+    .stock-info { font-size: 0.75rem; color: var(--ios-blue); margin-left: 3px; font-weight: 500; }
+    .edit-panel { background: #fff3cd; padding: 8px; border-radius: 8px; margin: 8px 0; font-size: 0.78rem; }
+    .group-summary { margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -240,7 +235,7 @@
   <div class="container">
     <div class="tabs">
       <div class="tab active" data-tab="tab-accounts">账号</div>
-      <div class="tab" data-tab="tab-purchase-order">采购</div>
+      <div class="tab" data-tab="tab-purchase">采购</div>
       <div class="tab" data-tab="tab-receive">签收</div>
       <div class="tab" data-tab="tab-sale">销售</div>
       <div class="tab" data-tab="tab-shipping">运费</div>
@@ -253,23 +248,23 @@
       <div class="card">
         <div class="row">
           <div class="col"><input type="text" id="newAccountName" placeholder="账号名称"></div>
-          <div><button onclick="addAccount()">➕ 添加</button></div>
+          <div><button onclick="addAccount()">➕</button></div>
         </div>
       </div>
       <div class="table-wrapper">
         <table id="accountTable">
-          <thead><tr><th>账号名称</th><th style="width:60px;"></th></tr></thead>
+          <thead><tr><th>账号名称</th><th style="width:40px;"></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
 
     <!-- 采购录入 -->
-    <div id="tab-purchase-order" class="panel">
+    <div id="tab-purchase" class="panel">
       <div class="ocr-section">
-        <div><input type="file" id="ocrImageInput" accept="image/*" style="display:none;"></div>
+        <input type="file" id="ocrImageInput" accept="image/*" style="display:none;">
         <button class="success" onclick="document.getElementById('ocrImageInput').click()">📸 识别截图</button>
-        <span style="font-size:0.8rem;color:var(--ios-secondary);margin-left:8px;">自动填单号、数量、价格</span>
+        <span style="font-size:0.7rem;color:var(--ios-secondary);margin-left:6px;">自动填单号、数量、价格</span>
         <div id="ocrStatus" class="ocr-status"></div>
         <img id="ocrPreview" class="ocr-preview-img" style="display:none;">
       </div>
@@ -281,22 +276,22 @@
         </div>
         <div class="row"><div class="col"><label>备注</label><input type="text" id="orderRemark"></div></div>
         <hr>
-        <h4 style="margin-bottom:8px;">添加商品</h4>
+        <h4 style="margin-bottom:6px;font-size:0.85rem;">添加商品</h4>
         <div class="row">
           <div class="col"><input type="text" id="itemProduct" list="productList" autocomplete="off" placeholder="商品名称"></div>
           <datalist id="productList"></datalist>
-          <div class="col"><input type="number" id="itemQty" value="1" min="1"></div>
+          <div class="col"><input type="number" id="itemQty" value="1" min="1" placeholder="数量"></div>
           <div class="col"><input type="number" id="itemPrice" step="0.01" placeholder="进价"></div>
           <div><button class="secondary" onclick="addItemToCart()">➕</button></div>
         </div>
-        <div class="item-list" id="cartItems"><p style="color:#aaa;">暂无商品</p></div>
+        <div class="item-list" id="cartItems"><p style="color:#aaa;font-size:0.75rem;">暂无商品</p></div>
         <button onclick="saveOrderItems()">📝 保存采购单</button>
       </div>
       <div class="card">
         <div class="row"><div class="col"><input type="text" id="orderSearch" placeholder="🔍 搜索"></div></div>
         <div class="table-wrapper">
           <table id="orderTable">
-            <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购</th><th>已签收</th><th>状态</th><th>日期</th><th>操作</th></tr></thead>
+            <thead><tr><th>账号</th><th>商品</th><th>订购</th><th>已收</th><th>状态</th><th>日期</th><th>操作</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -310,7 +305,7 @@
         <div class="row"><div class="col"><input type="text" id="receiveSearch" placeholder="🔍 搜索待签收"></div></div>
         <div class="table-wrapper">
           <table id="pendingTable">
-            <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>订购</th><th>已签收</th><th>未签收</th><th>日期</th><th>操作</th></tr></thead>
+            <thead><tr><th>账号</th><th>商品</th><th>订购</th><th>已收</th><th>未收</th><th>操作</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -327,16 +322,16 @@
           <div class="col"><label>售价</label><input type="number" id="salePrice" step="0.01" placeholder="卖价"></div>
         </div>
         <div class="row"><div class="col"><label>日期</label><input type="date" id="saleDate"></div></div>
-        <div class="row" style="font-size:0.9rem; color:var(--ios-secondary);">
-          <div>成本：<span id="costPreview">--</span> 元/件</div>
-          <div>总成本：<span id="totalCostPreview">--</span></div>
-          <div>预估利润：<span id="estProfit">--</span></div>
+        <div class="row" style="font-size:0.75rem;color:var(--ios-secondary);">
+          <span>成本：<span id="costPreview">--</span></span>
+          <span>总成本：<span id="totalCostPreview">--</span></span>
+          <span>利润：<span id="estProfit">--</span></span>
         </div>
         <button onclick="addSale()">📌 记录销售</button>
       </div>
       <div class="table-wrapper">
         <table id="saleTable">
-          <thead><tr><th>商品</th><th>数量</th><th>售价</th><th>成本</th><th>利润</th><th>日期</th><th></th></tr></thead>
+          <thead><tr><th>商品</th><th>数量</th><th>售价</th><th>利润</th><th>日期</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -346,9 +341,9 @@
     <div id="tab-shipping" class="panel">
       <div class="card">
         <div class="row">
-          <div class="col"><label>日期</label><input type="date" id="shippingDate"></div>
-          <div class="col"><label>总运费</label><input type="number" id="shippingAmount" step="0.01"></div>
-          <div class="col"><label>备注</label><input type="text" id="shippingNote"></div>
+          <div class="col"><input type="date" id="shippingDate"></div>
+          <div class="col"><input type="number" id="shippingAmount" step="0.01" placeholder="金额"></div>
+          <div class="col"><input type="text" id="shippingNote" placeholder="备注"></div>
           <div><button onclick="addShippingFee()">🚚 记录</button></div>
         </div>
       </div>
@@ -360,42 +355,40 @@
       </div>
     </div>
 
-    <!-- 库存（新增编辑、删除、总成本、按商品汇总） -->
+    <!-- 库存 -->
     <div id="tab-stock" class="panel">
       <div class="card">
         <div class="row">
           <div class="col"><input type="text" id="stockSearch" placeholder="🔍 搜索库存"></div>
-          <button class="success" onclick="toggleQuickForm()">➕ 快速入库</button>
-          <button class="secondary" onclick="toggleStockGroup()">📊 按商品汇总</button>
+          <button class="success" onclick="toggleQuickForm()">➕ 入库</button>
+          <button class="secondary" onclick="toggleStockGroup()">📊 汇总</button>
         </div>
         <div id="quickStockForm" class="quick-form" style="display:none;">
-          <h4>📥 新增库存</h4>
+          <h4 style="font-size:0.8rem;">📥 新增库存</h4>
           <div class="row">
             <div class="col"><select id="quickAccount"></select></div>
             <div class="col"><input type="text" id="quickProduct" list="productList" autocomplete="off" placeholder="商品"></div>
-            <div class="col"><input type="number" id="quickQty" value="1" min="1"></div>
+            <div class="col"><input type="number" id="quickQty" value="1" min="1" placeholder="数量"></div>
             <div class="col"><input type="number" id="quickPrice" step="0.01" placeholder="进价"></div>
             <div class="col"><input type="date" id="quickDate"></div>
           </div>
           <div class="row">
             <div class="col"><input type="text" id="quickRemark" placeholder="备注"></div>
-            <div><button onclick="quickAddStock()">✅ 入库</button></div>
+            <div><button onclick="quickAddStock()">✅</button></div>
           </div>
         </div>
       </div>
 
-      <!-- 按商品汇总视图（默认隐藏） -->
       <div id="stockGroupView" style="display:none;" class="card"></div>
 
       <div class="table-wrapper">
         <table id="stockTable">
-          <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本单价</th><th>剩余总成本</th><th>签收日</th><th>操作</th></tr></thead>
+          <thead><tr><th>商品</th><th>剩余</th><th>成本单价</th><th>总成本</th><th>操作</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
-      <div id="stockTotalCost" style="margin-top:12px;font-weight:600;"></div>
+      <div id="stockTotalCost" style="margin-top:8px;font-weight:600;font-size:0.8rem;"></div>
 
-      <!-- 库存编辑面板 -->
       <div id="stockEditPanel" style="display:none;" class="edit-panel"></div>
     </div>
 
@@ -409,10 +402,10 @@
           <div><button onclick="renderProfit()">查询</button></div>
         </div>
       </div>
-      <div id="profitSummary" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+      <div id="profitSummary" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
       <div class="table-wrapper">
         <table id="profitDetailTable">
-          <thead><tr><th>商品</th><th>数量</th><th>销售额</th><th>成本</th><th>利润</th><th>日期</th></tr></thead>
+          <thead><tr><th>商品</th><th>数量</th><th>销售额</th><th>利润</th><th>日期</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -476,9 +469,9 @@
   }
 
   function refreshSelects() {
-    const oa = document.getElementById('orderAccount'); if(oa) { oa.innerHTML = data.accounts.map(a => `<option value="${a}">${a}</option>`).join(''); }
-    const qa = document.getElementById('quickAccount'); if(qa) { qa.innerHTML = data.accounts.map(a => `<option value="${a}">${a}</option>`).join(''); }
-    const pa = document.getElementById('profitAccount'); if(pa) { pa.innerHTML = '<option value="all">全部</option>'+data.accounts.map(a => `<option value="${a}">${a}</option>`).join(''); }
+    const oa = document.getElementById('orderAccount'); if(oa) oa.innerHTML = data.accounts.map(a => `<option value="${a}">${a}</option>`).join('');
+    const qa = document.getElementById('quickAccount'); if(qa) qa.innerHTML = data.accounts.map(a => `<option value="${a}">${a}</option>`).join('');
+    const pa = document.getElementById('profitAccount'); if(pa) pa.innerHTML = '<option value="all">全部</option>'+data.accounts.map(a => `<option value="${a}">${a}</option>`).join('');
   }
 
   function genId() { return Date.now().toString(36)+Math.random().toString(36).substr(2,5); }
@@ -504,7 +497,7 @@
     refreshSelects(); renderAccounts();
   }
   function renderAccounts() {
-    document.querySelector('#accountTable tbody').innerHTML = data.accounts.map(a => `<tr><td>${a}</td><td><button class="danger" onclick="deleteAccount('${a}')">删除</button></td></tr>`).join('');
+    document.querySelector('#accountTable tbody').innerHTML = data.accounts.map(a => `<tr><td>${a}</td><td><button class="danger" onclick="deleteAccount('${a}')" style="padding:2px 6px;font-size:0.7rem;">删</button></td></tr>`).join('');
   }
 
   // 采购录入
@@ -523,11 +516,11 @@
   function removeFromCart(index) { currentCart.splice(index, 1); renderCart(); }
   function renderCart() {
     const container = document.getElementById('cartItems');
-    if (currentCart.length === 0) { container.innerHTML = '<p style="color:#aaa;">暂无商品</p>'; return; }
+    if (currentCart.length === 0) { container.innerHTML = '<p style="color:#aaa;font-size:0.75rem;">暂无商品</p>'; return; }
     container.innerHTML = currentCart.map((item, idx) => `
       <div class="item-row">
         <span>${item.product} ×${item.qty} ¥${item.unitPrice.toFixed(2)}</span>
-        <button class="danger" style="padding:4px 10px;" onclick="removeFromCart(${idx})">删除</button>
+        <button class="danger" style="padding:2px 8px;font-size:0.7rem;" onclick="removeFromCart(${idx})">删</button>
       </div>`).join('');
   }
   function saveOrderItems() {
@@ -553,7 +546,7 @@
     const panel = document.getElementById(panelId);
     panel.style.display = 'block';
     panel.innerHTML = `
-      <h4>✏️ 编辑采购记录</h4>
+      <h4 style="font-size:0.8rem;">✏️ 编辑</h4>
       <div class="row">
         <div class="col"><select id="editAccount">${data.accounts.map(a => `<option value="${a}" ${a===order.account?'selected':''}>${a}</option>`).join('')}</select></div>
         <div class="col"><input type="text" id="editOrderNo" value="${order.orderNo}"></div>
@@ -587,32 +580,31 @@
     updateAllDatalists();
     renderOrderList();
     renderPendingItems();
-    if (hasCallback) renderStock(); // 库存编辑后刷新库存
+    if (hasCallback) renderStock();
     alert('修改已保存');
   }
   function deleteOrder(id) {
-    if(!confirm('删除此采购记录？')) return;
+    if(!confirm('删除此记录？')) return;
     data.orders = data.orders.filter(o => o.id !== id);
     saveData();
     updateAllDatalists();
     renderOrderList();
     renderPendingItems();
-    renderStock(); // 同步刷新库存
+    renderStock();
   }
   function renderOrderList() {
     const search = (document.getElementById('orderSearch')?.value || '').toLowerCase();
     let list = data.orders;
     if(search) list = list.filter(o => o.orderNo.toLowerCase().includes(search) || o.product.toLowerCase().includes(search));
     const tbody = document.querySelector('#orderTable tbody');
-    if(list.length===0) { tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无采购单</td></tr>'; return; }
+    if(list.length===0) { tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无</td></tr>'; return; }
     tbody.innerHTML = list.map(o => {
-      const badge = o.status==='received' ? '<span class="badge badge-success">已签收</span>' : '<span class="badge badge-warning">待签收</span>';
+      const badge = o.status==='received' ? '<span class="badge badge-success">已签</span>' : '<span class="badge badge-warning">待签</span>';
       return `<tr>
-        <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td>
-        <td>${badge}</td><td>${o.date}</td>
+        <td>${o.account}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td><td>${badge}</td><td>${o.date}</td>
         <td>
-          <button class="warning" style="padding:4px 8px;" onclick="editOrder('${o.id}')">编辑</button>
-          <button class="danger" style="padding:4px 8px;" onclick="deleteOrder('${o.id}')">删</button>
+          <button class="warning" style="padding:2px 6px;font-size:0.65rem;" onclick="editOrder('${o.id}')">编</button>
+          <button class="danger" style="padding:2px 6px;font-size:0.65rem;" onclick="deleteOrder('${o.id}')">删</button>
         </td>
       </tr>`;
     }).join('');
@@ -633,13 +625,12 @@
     let pending = data.orders.filter(o => o.receivedQty < o.qty);
     if(search) pending = pending.filter(o => o.orderNo.toLowerCase().includes(search) || o.product.toLowerCase().includes(search));
     const tbody = document.querySelector('#pendingTable tbody');
-    if(pending.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="empty">🎉 全部签收完毕</td></tr>'; return; }
+    if(pending.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty">🎉 全部签收完毕</td></tr>'; return; }
     tbody.innerHTML = pending.map(o => {
       const left = o.qty - o.receivedQty;
       return `<tr>
-        <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td>
-        <td><strong>${left}</strong></td><td>${o.date}</td>
-        <td><button class="success" onclick="quickReceiveById('${o.id}')">📦 签收</button></td>
+        <td>${o.account}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td><td><strong>${left}</strong></td>
+        <td><button class="success" style="padding:4px 8px;font-size:0.7rem;" onclick="quickReceiveById('${o.id}')">📦</button></td>
       </tr>`;
     }).join('');
   }
@@ -668,7 +659,7 @@
       remaining -= take;
       if (remaining === 0) break;
     }
-    if (remaining > 0) { document.getElementById('costPreview').innerText = '库存不足'; document.getElementById('estProfit').innerText = '--'; return; }
+    if (remaining > 0) { document.getElementById('costPreview').innerText = '不足'; document.getElementById('estProfit').innerText = '--'; return; }
     document.getElementById('costPreview').innerText = (totalCost/qty).toFixed(2);
     document.getElementById('totalCostPreview').innerText = totalCost.toFixed(2);
     document.getElementById('estProfit').innerText = (price*qty - totalCost).toFixed(2);
@@ -717,12 +708,12 @@
   }
   function renderSaleList() {
     const tbody = document.querySelector('#saleTable tbody');
-    if(data.sales.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无销售记录</td></tr>'; return; }
+    if(data.sales.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无销售记录</td></tr>'; return; }
     tbody.innerHTML = data.sales.map(s => `
       <tr>
-        <td>${s.product}</td><td>${s.qty}</td><td>¥${s.salePrice.toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td>
+        <td>${s.product}</td><td>${s.qty}</td><td>¥${s.salePrice.toFixed(2)}</td>
         <td style="color:${s.profit>=0?'#34c759':'#ff3b30'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td>
-        <td><button class="danger" onclick="deleteSale('${s.id}')">删除</button></td>
+        <td><button class="danger" style="padding:2px 6px;font-size:0.65rem;" onclick="deleteSale('${s.id}')">删</button></td>
       </tr>`).join('');
   }
 
@@ -744,9 +735,9 @@
   }
   function renderShippingFees() {
     const tbody = document.querySelector('#shippingTable tbody');
-    if(data.shippingFees.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty">暂无快递费记录</td></tr>'; return; }
+    if(data.shippingFees.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty">暂无</td></tr>'; return; }
     data.shippingFees.sort((a,b) => a.date.localeCompare(b.date));
-    tbody.innerHTML = data.shippingFees.map(f => `<tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note||''}</td><td><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
+    tbody.innerHTML = data.shippingFees.map(f => `<tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note||''}</td><td><button class="danger" style="padding:2px 6px;font-size:0.65rem;" onclick="deleteShippingFee('${f.id}')">删</button></td></tr>`).join('');
   }
 
   // 快速入库
@@ -776,7 +767,7 @@
     alert('入库成功！');
   }
 
-  // ==== 库存模块（新增编辑、删除、总成本、汇总） ====
+  // 库存
   function renderStock() {
     const search = (document.getElementById('stockSearch')?.value || '').toLowerCase();
     let list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
@@ -784,7 +775,7 @@
     const tbody = document.querySelector('#stockTable tbody');
     let totalCost = 0;
     if(list.length===0) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty">暂无库存</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">暂无库存</td></tr>';
       document.getElementById('stockTotalCost').innerText = '';
       return;
     }
@@ -793,23 +784,21 @@
       const remainCost = remain * o.unitPrice;
       totalCost += remainCost;
       return `<tr>
-        <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.receivedQty}</td><td>${o.soldQty||0}</td><td><strong>${remain}</strong></td>
-        <td>¥${o.unitPrice.toFixed(2)}</td><td>¥${remainCost.toFixed(2)}</td><td>${o.receiveDate||''}</td>
+        <td>${o.product}</td><td><strong>${remain}</strong></td>
+        <td>¥${o.unitPrice.toFixed(2)}</td><td>¥${remainCost.toFixed(2)}</td>
         <td>
-          <button class="warning" style="padding:4px 8px;" onclick="editStockOrder('${o.id}')">编辑</button>
-          <button class="danger" style="padding:4px 8px;" onclick="deleteOrder('${o.id}')">删除</button>
+          <button class="warning" style="padding:2px 5px;font-size:0.6rem;" onclick="editStockOrder('${o.id}')">编</button>
+          <button class="danger" style="padding:2px 5px;font-size:0.6rem;" onclick="deleteOrder('${o.id}')">删</button>
         </td>
       </tr>`;
     }).join('');
-    document.getElementById('stockTotalCost').innerHTML = `<div style="text-align:right;margin-top:8px;">📊 库存总成本：<strong>¥${totalCost.toFixed(2)}</strong></div>`;
+    document.getElementById('stockTotalCost').innerHTML = `📊 总成本：<strong>¥${totalCost.toFixed(2)}</strong>`;
   }
 
   function editStockOrder(id) {
-    // 使用库存专用的编辑面板
     editOrder(id, 'stockEditPanel', true);
   }
 
-  // 按商品汇总切换
   function toggleStockGroup() {
     const view = document.getElementById('stockGroupView');
     if (view.style.display === 'none') {
@@ -834,8 +823,8 @@
       document.getElementById('stockGroupView').innerHTML = '<p class="empty">暂无库存</p>';
       return;
     }
-    let html = '<h4>📊 按商品汇总</h4>';
-    html += '<div class="table-wrapper"><table><thead><tr><th>商品</th><th>总剩余库存</th><th>总剩余成本</th><th>平均进价</th></tr></thead><tbody>';
+    let html = '<h4 style="font-size:0.8rem;">📊 按商品汇总</h4>';
+    html += '<div class="table-wrapper"><table><thead><tr><th>商品</th><th>剩余</th><th>总成本</th><th>均进价</th></tr></thead><tbody>';
     entries.forEach(([product, info]) => {
       const avgPrice = info.totalCost / info.totalQty;
       html += `<tr><td>${product}</td><td>${info.totalQty}</td><td>¥${info.totalCost.toFixed(2)}</td><td>¥${avgPrice.toFixed(2)}</td></tr>`;
@@ -876,25 +865,24 @@
 
     const tbody = document.querySelector('#profitDetailTable tbody');
     if(sales.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">无数据</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">无数据</td></tr>';
       document.getElementById('profitGroupSummary').innerHTML = '';
       return;
     }
-    tbody.innerHTML = sales.map(s => `<tr><td>${s.product}</td><td>${s.qty}</td><td>¥${(s.salePrice*s.qty).toFixed(2)}</td><td>¥${s.totalCost.toFixed(2)}</td><td style="color:${s.profit>=0?'#34c759':'#ff3b30'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td></tr>`).join('');
+    tbody.innerHTML = sales.map(s => `<tr><td>${s.product}</td><td>${s.qty}</td><td>¥${(s.salePrice*s.qty).toFixed(2)}</td><td style="color:${s.profit>=0?'#34c759':'#ff3b30'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td></tr>`).join('');
 
     const groupMap = {};
     sales.forEach(s => {
-      if (!groupMap[s.product]) groupMap[s.product] = { qty: 0, sales: 0, cost: 0, profit: 0 };
+      if (!groupMap[s.product]) groupMap[s.product] = { qty: 0, sales: 0, profit: 0 };
       groupMap[s.product].qty += s.qty;
       groupMap[s.product].sales += s.salePrice * s.qty;
-      groupMap[s.product].cost += s.totalCost;
       groupMap[s.product].profit += s.profit;
     });
     const groupArray = Object.entries(groupMap).map(([k,v]) => ({ product: k, ...v }));
-    let html = '<h4 style="margin-top:16px;">📊 按商品汇总</h4>';
-    html += '<div class="table-wrapper"><table><thead><tr><th>商品</th><th>总销量</th><th>总销售额</th><th>总成本</th><th>总利润</th></tr></thead><tbody>';
+    let html = '<h4 style="font-size:0.8rem;margin-top:10px;">📊 按商品汇总</h4>';
+    html += '<div class="table-wrapper"><table><thead><tr><th>商品</th><th>销量</th><th>销售额</th><th>利润</th></tr></thead><tbody>';
     groupArray.forEach(g => {
-      html += `<tr><td>${g.product}</td><td>${g.qty}</td><td>¥${g.sales.toFixed(2)}</td><td>¥${g.cost.toFixed(2)}</td><td style="color:${g.profit>=0?'#34c759':'#ff3b30'}">¥${g.profit.toFixed(2)}</td></tr>`;
+      html += `<tr><td>${g.product}</td><td>${g.qty}</td><td>¥${g.sales.toFixed(2)}</td><td style="color:${g.profit>=0?'#34c759':'#ff3b30'}">¥${g.profit.toFixed(2)}</td></tr>`;
     });
     html += '</tbody></table></div>';
     document.getElementById('profitGroupSummary').innerHTML = html;
@@ -938,7 +926,7 @@
     if(name==='tab-stock') renderStock();
     if(name==='tab-profit') renderProfit();
     if(name==='tab-receive') renderPendingItems();
-    if(name==='tab-purchase-order') { renderOrderList(); updateAllDatalists(); }
+    if(name==='tab-purchase') { renderOrderList(); updateAllDatalists(); }
     if(name==='tab-sale') { updateSalePreview(); updateAllDatalists(); }
     if(name==='tab-shipping') renderShippingFees();
   }
