@@ -59,14 +59,13 @@
     }
     .container { max-width: 1100px; margin: 0 auto; padding: 12px 12px; }
 
+    /* 标签栏换行 */
     .tabs {
       display: flex;
-      overflow-x: auto;
+      flex-wrap: wrap;
       gap: 8px;
       padding: 8px 0 12px;
-      -webkit-overflow-scrolling: touch;
     }
-    .tabs::-webkit-scrollbar { display: none; }
     .tab {
       flex: 0 0 auto;
       padding: 8px 18px;
@@ -99,7 +98,7 @@
     }
 
     .row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; align-items: center; }
-    .col { flex: 1 1 100%; min-width: 0; }
+    .col { flex: 1 1 120px; min-width: 80px; }
 
     label {
       display: block;
@@ -140,59 +139,63 @@
     button.success { background: var(--success); }
     button.warning { background: var(--warning); color: white; }
 
-    .empty { color: #94a3b8; text-align: center; padding: 24px; }
-
-    .list-card {
-      background: white;
+    .table-wrapper {
+      width: 100%;
       border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 10px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      overflow: hidden;
+      background: white;
+      margin-top: 8px;
     }
-    .list-card .line {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.8rem;
-    }
-    .list-card .line .label { color: var(--text-secondary); }
-    .list-card .actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 6px;
-      justify-content: flex-end;
-    }
-    .list-card .actions button {
-      padding: 6px 12px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
       font-size: 0.75rem;
+      table-layout: auto;
     }
+    th {
+      background: #f8fafc;
+      padding: 10px 6px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 10px 6px;
+      border-bottom: 1px solid #f1f5f9;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #fafbfc; }
 
     .badge {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 12px;
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       font-weight: 600;
     }
     .badge-warning { background: #fef3c7; color: #92400e; }
     .badge-success { background: #d1fae5; color: #065f46; }
 
     hr { margin: 14px 0; border: 0.5px solid var(--border); }
+    .empty { color: #94a3b8; text-align: center; padding: 24px; font-size: 0.8rem; }
 
     .stat-box {
       background: white;
       border-radius: 12px;
-      padding: 12px;
+      padding: 10px 14px;
       display: inline-block;
-      margin: 4px;
+      margin: 3px;
       min-width: 70px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
       text-align: center;
     }
-    .stat-num { font-size: 1.1rem; font-weight: 700; margin-top: 2px; }
+    .stat-num { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-top: 2px; }
 
     .item-list { background: #f8fafc; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
     .ocr-section { background: white; border-radius: var(--radius); padding: 14px; margin-bottom: 14px; box-shadow: var(--shadow); }
@@ -231,7 +234,12 @@
         <div><button onclick="addAccount()">➕ 添加</button></div>
       </div>
     </div>
-    <div id="accountList"></div>
+    <div class="table-wrapper">
+      <table id="accountTable">
+        <thead><tr><th>账号名称</th><th style="width:60px;"></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- 采购录入 -->
@@ -264,7 +272,12 @@
     </div>
     <div class="card">
       <div class="row"><div class="col"><input type="text" id="orderSearch" placeholder="🔍 搜索订单"></div></div>
-      <div id="orderList"></div>
+      <div class="table-wrapper">
+        <table id="orderTable">
+          <thead><tr><th>账号</th><th>商品</th><th>订购</th><th>已收</th><th>状态</th><th>日期</th><th>操作</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
     <div id="editOrderPanel" style="display:none;" class="edit-panel"></div>
   </div>
@@ -273,7 +286,12 @@
   <div id="tab-receive" class="panel">
     <div class="card">
       <div class="row"><div class="col"><input type="text" id="receiveSearch" placeholder="🔍 搜索待签收"></div></div>
-      <div id="pendingList"></div>
+      <div class="table-wrapper">
+        <table id="pendingTable">
+          <thead><tr><th>账号</th><th>商品</th><th>订购</th><th>已收</th><th>未收</th><th>操作</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -294,7 +312,12 @@
       </div>
       <button onclick="addSale()">📌 记录销售</button>
     </div>
-    <div id="saleList"></div>
+    <div class="table-wrapper">
+      <table id="saleTable">
+        <thead><tr><th>商品</th><th>数量</th><th>售价</th><th>利润</th><th>日期</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- 快递费 -->
@@ -307,7 +330,12 @@
         <div><button onclick="addShippingFee()">🚚 记录</button></div>
       </div>
     </div>
-    <div id="shippingList"></div>
+    <div class="table-wrapper">
+      <table id="shippingTable">
+        <thead><tr><th>日期</th><th>金额</th><th>备注</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- 库存 -->
@@ -334,7 +362,13 @@
       </div>
     </div>
     <div id="stockGroupView" style="display:none;" class="card"></div>
-    <div id="stockList"></div>
+    <div class="table-wrapper">
+      <table id="stockTable">
+        <thead><tr><th>商品</th><th>剩余</th><th>成本单价</th><th>总成本</th><th>操作</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="stockTotalCost" style="margin-top:12px;font-weight:600;color:#1e293b;"></div>
     <div id="stockEditPanel" style="display:none;" class="edit-panel"></div>
   </div>
 
@@ -349,8 +383,13 @@
       </div>
     </div>
     <div id="profitSummary" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-    <div id="profitList"></div>
-    <div id="profitGroupSummary"></div>
+    <div class="table-wrapper">
+      <table id="profitDetailTable">
+        <thead><tr><th>商品</th><th>数量</th><th>销售额</th><th>利润</th><th>日期</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="profitGroupSummary" class="group-summary"></div>
   </div>
 </div>
 
@@ -406,7 +445,7 @@
 
   function refreshAllUI() {
     refreshSelects(); renderAccounts(); renderOrderList(); renderPendingItems();
-    renderSaleList(); renderShippingList(); renderStock(); updateAllDatalists(); updateSalePreview();
+    renderSaleList(); renderShippingFees(); renderStock(); updateAllDatalists(); updateSalePreview();
   }
 
   function refreshSelects() {
@@ -437,13 +476,7 @@
     refreshSelects(); renderAccounts();
   }
   function renderAccounts() {
-    const container = document.getElementById('accountList');
-    container.innerHTML = data.accounts.map(a => `
-      <div class="list-card">
-        <div class="line"><span>${a}</span></div>
-        <div class="actions"><button class="danger" onclick="deleteAccount('${a}')">删除</button></div>
-      </div>
-    `).join('');
+    document.querySelector('#accountTable tbody').innerHTML = data.accounts.map(a => `<tr><td>${a}</td><td><button class="danger" style="padding:4px 10px;" onclick="deleteAccount('${a}')">删除</button></td></tr>`).join('');
   }
 
   function clearCart() { currentCart = []; renderCart(); }
@@ -486,6 +519,49 @@
     updateAllDatalists(); renderOrderList();
     alert('采购单已保存！');
   }
+  function editOrder(id, panelId = 'editOrderPanel', renderCallback = null) {
+    const order = data.orders.find(o => o.id === id);
+    if (!order) return;
+    const panel = document.getElementById(panelId);
+    panel.style.display = 'block';
+    panel.innerHTML = `
+      <h4 style="font-size:0.9rem;">✏️ 编辑</h4>
+      <div class="row">
+        <div class="col"><select id="editAccount">${data.accounts.map(a => `<option value="${a}" ${a===order.account?'selected':''}>${a}</option>`).join('')}</select></div>
+        <div class="col"><input type="text" id="editOrderNo" value="${order.orderNo}"></div>
+        <div class="col"><input type="text" id="editProduct" value="${order.product}"></div>
+      </div>
+      <div class="row">
+        <div class="col"><input type="number" id="editQty" value="${order.qty}" min="${order.receivedQty||0}"></div>
+        <div class="col"><input type="number" id="editPrice" step="0.01" value="${order.unitPrice}"></div>
+        <div class="col"><input type="date" id="editDate" value="${order.date}"></div>
+      </div>
+      <div class="row"><div class="col"><input type="text" id="editRemark" value="${order.remark||''}"></div></div>
+      <button onclick="saveEditOrder('${order.id}', '${panelId}', ${renderCallback ? 'true' : 'false'})">💾 保存</button>
+      <button class="secondary" onclick="document.getElementById('${panelId}').style.display='none'">取消</button>
+    `;
+  }
+  function saveEditOrder(id, panelId = 'editOrderPanel', hasCallback = false) {
+    const order = data.orders.find(o => o.id === id);
+    if (!order) return;
+    const newQty = parseInt(document.getElementById('editQty').value);
+    const newPrice = parseFloat(document.getElementById('editPrice').value);
+    if (!newQty || isNaN(newPrice)) return alert('数量和进价必填');
+    if (newQty < (order.receivedQty||0)) return alert(`不能小于已签收数量(${order.receivedQty})`);
+    order.account = document.getElementById('editAccount').value;
+    order.orderNo = document.getElementById('editOrderNo').value.trim();
+    order.product = document.getElementById('editProduct').value.trim();
+    order.qty = newQty; order.unitPrice = newPrice;
+    order.date = document.getElementById('editDate').value;
+    order.remark = document.getElementById('editRemark').value.trim();
+    saveData();
+    document.getElementById(panelId).style.display = 'none';
+    updateAllDatalists();
+    renderOrderList();
+    renderPendingItems();
+    if (hasCallback) renderStock();
+    alert('修改已保存');
+  }
   function deleteOrder(id) {
     if(!confirm('删除此记录？')) return;
     data.orders = data.orders.filter(o => o.id !== id);
@@ -499,21 +575,17 @@
     const search = (document.getElementById('orderSearch')?.value || '').toLowerCase();
     let list = data.orders;
     if(search) list = list.filter(o => o.orderNo.toLowerCase().includes(search) || o.product.toLowerCase().includes(search));
-    const container = document.getElementById('orderList');
-    if(list.length===0) { container.innerHTML = '<p class="empty">暂无采购单</p>'; return; }
-    container.innerHTML = list.map(o => {
+    const tbody = document.querySelector('#orderTable tbody');
+    if(list.length===0) { tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无采购单</td></tr>'; return; }
+    tbody.innerHTML = list.map(o => {
       const badge = o.status==='received' ? '<span class="badge badge-success">已签</span>' : '<span class="badge badge-warning">待签</span>';
-      return `<div class="list-card">
-        <div class="line"><span class="label">账号</span><span>${o.account}</span></div>
-        <div class="line"><span class="label">商品</span><span>${o.product}</span></div>
-        <div class="line"><span class="label">订购/已收</span><span>${o.qty} / ${o.receivedQty}</span></div>
-        <div class="line"><span class="label">状态</span><span>${badge}</span></div>
-        <div class="line"><span class="label">日期</span><span>${o.date}</span></div>
-        <div class="actions">
-          <button class="warning" onclick="editOrder('${o.id}')">编辑</button>
-          <button class="danger" onclick="deleteOrder('${o.id}')">删除</button>
-        </div>
-      </div>`;
+      return `<tr>
+        <td>${o.account}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td><td>${badge}</td><td>${o.date}</td>
+        <td>
+          <button class="warning" style="padding:4px 8px;font-size:0.7rem;" onclick="editOrder('${o.id}')">编辑</button>
+          <button class="danger" style="padding:4px 8px;font-size:0.7rem;" onclick="deleteOrder('${o.id}')">删除</button>
+        </td>
+      </tr>`;
     }).join('');
   }
 
@@ -530,16 +602,14 @@
     const search = (document.getElementById('receiveSearch')?.value || '').toLowerCase();
     let pending = data.orders.filter(o => o.receivedQty < o.qty);
     if(search) pending = pending.filter(o => o.orderNo.toLowerCase().includes(search) || o.product.toLowerCase().includes(search));
-    const container = document.getElementById('pendingList');
-    if(pending.length === 0) { container.innerHTML = '<p class="empty">🎉 全部签收完毕</p>'; return; }
-    container.innerHTML = pending.map(o => {
+    const tbody = document.querySelector('#pendingTable tbody');
+    if(pending.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty">🎉 全部签收完毕</td></tr>'; return; }
+    tbody.innerHTML = pending.map(o => {
       const left = o.qty - o.receivedQty;
-      return `<div class="list-card">
-        <div class="line"><span class="label">账号</span><span>${o.account}</span></div>
-        <div class="line"><span class="label">商品</span><span>${o.product}</span></div>
-        <div class="line"><span class="label">订购/已收/未收</span><span>${o.qty} / ${o.receivedQty} / <strong>${left}</strong></span></div>
-        <div class="actions"><button class="success" onclick="quickReceiveById('${o.id}')">📦 签收</button></div>
-      </div>`;
+      return `<tr>
+        <td>${o.account}</td><td>${o.product}</td><td>${o.qty}</td><td>${o.receivedQty}</td><td><strong>${left}</strong></td>
+        <td><button class="success" style="padding:4px 10px;font-size:0.75rem;" onclick="quickReceiveById('${o.id}')">📦 签收</button></td>
+      </tr>`;
     }).join('');
   }
 
@@ -614,18 +684,14 @@
     renderSaleList(); renderStock();
   }
   function renderSaleList() {
-    const container = document.getElementById('saleList');
-    if(data.sales.length === 0) { container.innerHTML = '<p class="empty">暂无销售记录</p>'; return; }
-    container.innerHTML = data.sales.map(s => `
-      <div class="list-card">
-        <div class="line"><span class="label">商品</span><span>${s.product}</span></div>
-        <div class="line"><span class="label">数量</span><span>${s.qty}</span></div>
-        <div class="line"><span class="label">售价</span><span>¥${s.salePrice.toFixed(2)}</span></div>
-        <div class="line"><span class="label">利润</span><span style="color:${s.profit>=0?'#10b981':'#ef4444'}">¥${s.profit.toFixed(2)}</span></div>
-        <div class="line"><span class="label">日期</span><span>${s.saleDate}</span></div>
-        <div class="actions"><button class="danger" onclick="deleteSale('${s.id}')">删除</button></div>
-      </div>
-    `).join('');
+    const tbody = document.querySelector('#saleTable tbody');
+    if(data.sales.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="empty">暂无销售记录</td></tr>'; return; }
+    tbody.innerHTML = data.sales.map(s => `
+      <tr>
+        <td>${s.product}</td><td>${s.qty}</td><td>¥${s.salePrice.toFixed(2)}</td>
+        <td style="color:${s.profit>=0?'#10b981':'#ef4444'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td>
+        <td><button class="danger" style="padding:4px 8px;font-size:0.7rem;" onclick="deleteSale('${s.id}')">删除</button></td>
+      </tr>`).join('');
   }
 
   function addShippingFee() {
@@ -636,25 +702,18 @@
     data.shippingFees.push({ id: genId(), date, amount, note }); saveData();
     document.getElementById('shippingAmount').value = '';
     document.getElementById('shippingNote').value = '';
-    renderShippingList();
+    renderShippingFees();
   }
   function deleteShippingFee(id) {
     if(!confirm('删除快递费记录？')) return;
     data.shippingFees = data.shippingFees.filter(f => f.id !== id); saveData();
-    renderShippingList();
+    renderShippingFees();
   }
-  function renderShippingList() {
-    const container = document.getElementById('shippingList');
-    if(data.shippingFees.length === 0) { container.innerHTML = '<p class="empty">暂无快递费记录</p>'; return; }
+  function renderShippingFees() {
+    const tbody = document.querySelector('#shippingTable tbody');
+    if(data.shippingFees.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="empty">暂无快递费记录</td></tr>'; return; }
     data.shippingFees.sort((a,b) => a.date.localeCompare(b.date));
-    container.innerHTML = data.shippingFees.map(f => `
-      <div class="list-card">
-        <div class="line"><span class="label">日期</span><span>${f.date}</span></div>
-        <div class="line"><span class="label">金额</span><span>¥${f.amount.toFixed(2)}</span></div>
-        <div class="line"><span class="label">备注</span><span>${f.note||''}</span></div>
-        <div class="actions"><button class="danger" onclick="deleteShippingFee('${f.id}')">删除</button></div>
-      </div>
-    `).join('');
+    tbody.innerHTML = data.shippingFees.map(f => `<tr><td>${f.date}</td><td>¥${f.amount.toFixed(2)}</td><td>${f.note||''}</td><td><button class="danger" style="padding:4px 8px;font-size:0.7rem;" onclick="deleteShippingFee('${f.id}')">删除</button></td></tr>`).join('');
   }
 
   function toggleQuickForm() {
@@ -687,70 +746,30 @@
     const search = (document.getElementById('stockSearch')?.value || '').toLowerCase();
     let list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
     if(search) list = list.filter(o => o.product.toLowerCase().includes(search));
-    const container = document.getElementById('stockList');
+    const tbody = document.querySelector('#stockTable tbody');
     let totalCost = 0;
-    if(list.length===0) { container.innerHTML = '<p class="empty">暂无库存</p>'; return; }
-    container.innerHTML = list.map(o => {
+    if(list.length===0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">暂无库存</td></tr>';
+      document.getElementById('stockTotalCost').innerText = '';
+      return;
+    }
+    tbody.innerHTML = list.map(o => {
       const remain = o.receivedQty - (o.soldQty||0);
       const remainCost = remain * o.unitPrice;
       totalCost += remainCost;
-      return `<div class="list-card">
-        <div class="line"><span class="label">商品</span><span>${o.product}</span></div>
-        <div class="line"><span class="label">剩余</span><span><strong>${remain}</strong></span></div>
-        <div class="line"><span class="label">成本单价</span><span>¥${o.unitPrice.toFixed(2)}</span></div>
-        <div class="line"><span class="label">总成本</span><span>¥${remainCost.toFixed(2)}</span></div>
-        <div class="actions">
-          <button class="warning" onclick="editStockOrder('${o.id}')">编辑</button>
-          <button class="danger" onclick="deleteOrder('${o.id}')">删除</button>
-        </div>
-      </div>`;
+      return `<tr>
+        <td>${o.product}</td><td><strong>${remain}</strong></td>
+        <td>¥${o.unitPrice.toFixed(2)}</td><td>¥${remainCost.toFixed(2)}</td>
+        <td>
+          <button class="warning" style="padding:4px 6px;font-size:0.65rem;" onclick="editStockOrder('${o.id}')">编</button>
+          <button class="danger" style="padding:4px 6px;font-size:0.65rem;" onclick="deleteOrder('${o.id}')">删</button>
+        </td>
+      </tr>`;
     }).join('');
+    document.getElementById('stockTotalCost').innerHTML = `📊 库存总成本：<strong>¥${totalCost.toFixed(2)}</strong>`;
   }
 
   function editStockOrder(id) { editOrder(id, 'stockEditPanel', true); }
-  function editOrder(id, panelId = 'editOrderPanel', renderCallback = null) {
-    const order = data.orders.find(o => o.id === id);
-    if (!order) return;
-    const panel = document.getElementById(panelId);
-    panel.style.display = 'block';
-    panel.innerHTML = `
-      <h4 style="font-size:0.9rem;">✏️ 编辑</h4>
-      <div class="row">
-        <div class="col"><select id="editAccount">${data.accounts.map(a => `<option value="${a}" ${a===order.account?'selected':''}>${a}</option>`).join('')}</select></div>
-        <div class="col"><input type="text" id="editOrderNo" value="${order.orderNo}"></div>
-        <div class="col"><input type="text" id="editProduct" value="${order.product}"></div>
-      </div>
-      <div class="row">
-        <div class="col"><input type="number" id="editQty" value="${order.qty}" min="${order.receivedQty||0}"></div>
-        <div class="col"><input type="number" id="editPrice" step="0.01" value="${order.unitPrice}"></div>
-        <div class="col"><input type="date" id="editDate" value="${order.date}"></div>
-      </div>
-      <div class="row"><div class="col"><input type="text" id="editRemark" value="${order.remark||''}"></div></div>
-      <button onclick="saveEditOrder('${order.id}', '${panelId}', ${renderCallback ? 'true' : 'false'})">💾 保存</button>
-      <button class="secondary" onclick="document.getElementById('${panelId}').style.display='none'">取消</button>
-    `;
-  }
-  function saveEditOrder(id, panelId = 'editOrderPanel', hasCallback = false) {
-    const order = data.orders.find(o => o.id === id);
-    if (!order) return;
-    const newQty = parseInt(document.getElementById('editQty').value);
-    const newPrice = parseFloat(document.getElementById('editPrice').value);
-    if (!newQty || isNaN(newPrice)) return alert('数量和进价必填');
-    if (newQty < (order.receivedQty||0)) return alert(`不能小于已签收数量(${order.receivedQty})`);
-    order.account = document.getElementById('editAccount').value;
-    order.orderNo = document.getElementById('editOrderNo').value.trim();
-    order.product = document.getElementById('editProduct').value.trim();
-    order.qty = newQty; order.unitPrice = newPrice;
-    order.date = document.getElementById('editDate').value;
-    order.remark = document.getElementById('editRemark').value.trim();
-    saveData();
-    document.getElementById(panelId).style.display = 'none';
-    updateAllDatalists();
-    renderOrderList();
-    renderPendingItems();
-    if (hasCallback) renderStock();
-    alert('修改已保存');
-  }
 
   function toggleStockGroup() {
     const view = document.getElementById('stockGroupView');
@@ -759,6 +778,7 @@
       renderStockGroup();
     } else { view.style.display = 'none'; }
   }
+
   function renderStockGroup() {
     const groupMap = {};
     data.orders.forEach(o => {
@@ -769,17 +789,17 @@
       groupMap[o.product].totalCost += remain * o.unitPrice;
     });
     const entries = Object.entries(groupMap);
-    if (entries.length === 0) { document.getElementById('stockGroupView').innerHTML = '<p class="empty">暂无库存</p>'; return; }
+    if (entries.length === 0) {
+      document.getElementById('stockGroupView').innerHTML = '<p class="empty">暂无库存</p>';
+      return;
+    }
     let html = '<h4 style="font-size:0.9rem;">📊 按商品汇总</h4>';
+    html += '<div class="table-wrapper"><table><thead><tr><th>商品</th><th>剩余</th><th>总成本</th><th>平均进价</th></tr></thead><tbody>';
     entries.forEach(([product, info]) => {
       const avgPrice = info.totalCost / info.totalQty;
-      html += `<div class="list-card">
-        <div class="line"><span class="label">商品</span><span>${product}</span></div>
-        <div class="line"><span class="label">剩余</span><span>${info.totalQty}</span></div>
-        <div class="line"><span class="label">总成本</span><span>¥${info.totalCost.toFixed(2)}</span></div>
-        <div class="line"><span class="label">平均进价</span><span>¥${avgPrice.toFixed(2)}</span></div>
-      </div>`;
+      html += `<tr><td>${product}</td><td>${info.totalQty}</td><td>¥${info.totalCost.toFixed(2)}</td><td>¥${avgPrice.toFixed(2)}</td></tr>`;
     });
+    html += '</tbody></table></div>';
     document.getElementById('stockGroupView').innerHTML = html;
   }
 
@@ -812,17 +832,13 @@
       <div class="stat-box"><div>净利润</div><div class="stat-num" style="color:${netProfit>=0?'#10b981':'#ef4444'}">¥${netProfit.toFixed(2)}</div></div>
     `;
 
-    const container = document.getElementById('profitList');
-    if(sales.length === 0) { container.innerHTML = '<p class="empty">无数据</p>'; document.getElementById('profitGroupSummary').innerHTML = ''; return; }
-    container.innerHTML = sales.map(s => `
-      <div class="list-card">
-        <div class="line"><span class="label">商品</span><span>${s.product}</span></div>
-        <div class="line"><span class="label">数量</span><span>${s.qty}</span></div>
-        <div class="line"><span class="label">销售额</span><span>¥${(s.salePrice*s.qty).toFixed(2)}</span></div>
-        <div class="line"><span class="label">利润</span><span style="color:${s.profit>=0?'#10b981':'#ef4444'}">¥${s.profit.toFixed(2)}</span></div>
-        <div class="line"><span class="label">日期</span><span>${s.saleDate}</span></div>
-      </div>
-    `).join('');
+    const tbody = document.querySelector('#profitDetailTable tbody');
+    if(sales.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">无数据</td></tr>';
+      document.getElementById('profitGroupSummary').innerHTML = '';
+      return;
+    }
+    tbody.innerHTML = sales.map(s => `<tr><td>${s.product}</td><td>${s.qty}</td><td>¥${(s.salePrice*s.qty).toFixed(2)}</td><td style="color:${s.profit>=0?'#10b981':'#ef4444'}">¥${s.profit.toFixed(2)}</td><td>${s.saleDate}</td></tr>`).join('');
 
     const groupMap = {};
     sales.forEach(s => {
@@ -833,14 +849,11 @@
     });
     const groupArray = Object.entries(groupMap).map(([k,v]) => ({ product: k, ...v }));
     let html = '<h4 style="font-size:0.9rem;margin-top:14px;">📊 按商品汇总</h4>';
+    html += '<div class="table-wrapper"><table><thead><tr><th>商品</th><th>销量</th><th>销售额</th><th>利润</th></tr></thead><tbody>';
     groupArray.forEach(g => {
-      html += `<div class="list-card">
-        <div class="line"><span class="label">商品</span><span>${g.product}</span></div>
-        <div class="line"><span class="label">销量</span><span>${g.qty}</span></div>
-        <div class="line"><span class="label">销售额</span><span>¥${g.sales.toFixed(2)}</span></div>
-        <div class="line"><span class="label">利润</span><span style="color:${g.profit>=0?'#10b981':'#ef4444'}">¥${g.profit.toFixed(2)}</span></div>
-      </div>`;
+      html += `<tr><td>${g.product}</td><td>${g.qty}</td><td>¥${g.sales.toFixed(2)}</td><td style="color:${g.profit>=0?'#10b981':'#ef4444'}">¥${g.profit.toFixed(2)}</td></tr>`;
     });
+    html += '</tbody></table></div>';
     document.getElementById('profitGroupSummary').innerHTML = html;
   }
 
@@ -882,7 +895,7 @@
     if(name==='tab-receive') renderPendingItems();
     if(name==='tab-purchase') { renderOrderList(); updateAllDatalists(); }
     if(name==='tab-sale') { updateSalePreview(); updateAllDatalists(); }
-    if(name==='tab-shipping') renderShippingList();
+    if(name==='tab-shipping') renderShippingFees();
   }
 
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
