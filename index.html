@@ -360,12 +360,13 @@
       </div>
     </div>
 
-    <!-- 库存 -->
+    <!-- 库存（新增编辑、删除、总成本、按商品汇总） -->
     <div id="tab-stock" class="panel">
       <div class="card">
         <div class="row">
           <div class="col"><input type="text" id="stockSearch" placeholder="🔍 搜索库存"></div>
           <button class="success" onclick="toggleQuickForm()">➕ 快速入库</button>
+          <button class="secondary" onclick="toggleStockGroup()">📊 按商品汇总</button>
         </div>
         <div id="quickStockForm" class="quick-form" style="display:none;">
           <h4>📥 新增库存</h4>
@@ -382,13 +383,20 @@
           </div>
         </div>
       </div>
+
+      <!-- 按商品汇总视图（默认隐藏） -->
+      <div id="stockGroupView" style="display:none;" class="card"></div>
+
       <div class="table-wrapper">
         <table id="stockTable">
-          <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本</th><th>签收日</th></tr></thead>
+          <thead><tr><th>账号</th><th>订单号</th><th>商品</th><th>签收数</th><th>已售</th><th>剩余</th><th>成本单价</th><th>剩余总成本</th><th>签收日</th><th>操作</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
       <div id="stockTotalCost" style="margin-top:12px;font-weight:600;"></div>
+
+      <!-- 库存编辑面板 -->
+      <div id="stockEditPanel" style="display:none;" class="edit-panel"></div>
     </div>
 
     <!-- 利润报表 -->
@@ -539,10 +547,10 @@
     updateAllDatalists(); renderOrderList();
     alert('采购单已保存！');
   }
-  function editOrder(id) {
+  function editOrder(id, panelId = 'editOrderPanel', renderCallback = null) {
     const order = data.orders.find(o => o.id === id);
     if (!order) return;
-    const panel = document.getElementById('editOrderPanel');
+    const panel = document.getElementById(panelId);
     panel.style.display = 'block';
     panel.innerHTML = `
       <h4>✏️ 编辑采购记录</h4>
@@ -557,11 +565,11 @@
         <div class="col"><input type="date" id="editDate" value="${order.date}"></div>
       </div>
       <div class="row"><div class="col"><input type="text" id="editRemark" value="${order.remark||''}"></div></div>
-      <button onclick="saveEditOrder('${order.id}')">💾 保存</button>
-      <button class="secondary" onclick="document.getElementById('editOrderPanel').style.display='none'">取消</button>
+      <button onclick="saveEditOrder('${order.id}', '${panelId}', ${renderCallback ? 'true' : 'false'})">💾 保存</button>
+      <button class="secondary" onclick="document.getElementById('${panelId}').style.display='none'">取消</button>
     `;
   }
-  function saveEditOrder(id) {
+  function saveEditOrder(id, panelId = 'editOrderPanel', hasCallback = false) {
     const order = data.orders.find(o => o.id === id);
     if (!order) return;
     const newQty = parseInt(document.getElementById('editQty').value);
@@ -575,14 +583,21 @@
     order.date = document.getElementById('editDate').value;
     order.remark = document.getElementById('editRemark').value.trim();
     saveData();
-    document.getElementById('editOrderPanel').style.display = 'none';
-    updateAllDatalists(); renderOrderList(); renderPendingItems();
+    document.getElementById(panelId).style.display = 'none';
+    updateAllDatalists();
+    renderOrderList();
+    renderPendingItems();
+    if (hasCallback) renderStock(); // 库存编辑后刷新库存
     alert('修改已保存');
   }
   function deleteOrder(id) {
     if(!confirm('删除此采购记录？')) return;
     data.orders = data.orders.filter(o => o.id !== id);
-    saveData(); updateAllDatalists(); renderOrderList(); renderPendingItems();
+    saveData();
+    updateAllDatalists();
+    renderOrderList();
+    renderPendingItems();
+    renderStock(); // 同步刷新库存
   }
   function renderOrderList() {
     const search = (document.getElementById('orderSearch')?.value || '').toLowerCase();
@@ -611,7 +626,7 @@
     order.status = 'received';
     order.receiveDate = new Date().toISOString().split('T')[0];
     if(order.soldQty === undefined) order.soldQty = 0;
-    saveData(); renderPendingItems(); renderOrderList();
+    saveData(); renderPendingItems(); renderOrderList(); renderStock();
   }
   function renderPendingItems() {
     const search = (document.getElementById('receiveSearch')?.value || '').toLowerCase();
@@ -686,7 +701,7 @@
     document.getElementById('saleQty').value = 1;
     document.getElementById('salePrice').value = '';
     alert(`销售已保存！\n剩余库存：${getTotalStock(product)} 件`);
-    renderSaleList(); updateAllDatalists(); updateSalePreview();
+    renderSaleList(); updateAllDatalists(); updateSalePreview(); renderStock();
   }
   function deleteSale(id) {
     if(!confirm('删除此销售记录？')) return;
@@ -698,7 +713,7 @@
       }
     }
     data.sales = data.sales.filter(s => s.id !== id); saveData();
-    renderSaleList();
+    renderSaleList(); renderStock();
   }
   function renderSaleList() {
     const tbody = document.querySelector('#saleTable tbody');
@@ -761,7 +776,7 @@
     alert('入库成功！');
   }
 
-  // 库存
+  // ==== 库存模块（新增编辑、删除、总成本、汇总） ====
   function renderStock() {
     const search = (document.getElementById('stockSearch')?.value || '').toLowerCase();
     let list = data.orders.filter(o => o.receivedQty > (o.soldQty||0));
@@ -769,16 +784,64 @@
     const tbody = document.querySelector('#stockTable tbody');
     let totalCost = 0;
     if(list.length===0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">暂无库存</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="empty">暂无库存</td></tr>';
       document.getElementById('stockTotalCost').innerText = '';
       return;
     }
     tbody.innerHTML = list.map(o => {
       const remain = o.receivedQty - (o.soldQty||0);
-      totalCost += remain * o.unitPrice;
-      return `<tr><td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.receivedQty}</td><td>${o.soldQty||0}</td><td><strong>${remain}</strong></td><td>¥${o.unitPrice.toFixed(2)}</td><td>${o.receiveDate||''}</td></tr>`;
+      const remainCost = remain * o.unitPrice;
+      totalCost += remainCost;
+      return `<tr>
+        <td>${o.account}</td><td>${o.orderNo}</td><td>${o.product}</td><td>${o.receivedQty}</td><td>${o.soldQty||0}</td><td><strong>${remain}</strong></td>
+        <td>¥${o.unitPrice.toFixed(2)}</td><td>¥${remainCost.toFixed(2)}</td><td>${o.receiveDate||''}</td>
+        <td>
+          <button class="warning" style="padding:4px 8px;" onclick="editStockOrder('${o.id}')">编辑</button>
+          <button class="danger" style="padding:4px 8px;" onclick="deleteOrder('${o.id}')">删除</button>
+        </td>
+      </tr>`;
     }).join('');
     document.getElementById('stockTotalCost').innerHTML = `<div style="text-align:right;margin-top:8px;">📊 库存总成本：<strong>¥${totalCost.toFixed(2)}</strong></div>`;
+  }
+
+  function editStockOrder(id) {
+    // 使用库存专用的编辑面板
+    editOrder(id, 'stockEditPanel', true);
+  }
+
+  // 按商品汇总切换
+  function toggleStockGroup() {
+    const view = document.getElementById('stockGroupView');
+    if (view.style.display === 'none') {
+      view.style.display = 'block';
+      renderStockGroup();
+    } else {
+      view.style.display = 'none';
+    }
+  }
+
+  function renderStockGroup() {
+    const groupMap = {};
+    data.orders.forEach(o => {
+      const remain = o.receivedQty - (o.soldQty||0);
+      if (remain <= 0) return;
+      if (!groupMap[o.product]) groupMap[o.product] = { totalQty: 0, totalCost: 0 };
+      groupMap[o.product].totalQty += remain;
+      groupMap[o.product].totalCost += remain * o.unitPrice;
+    });
+    const entries = Object.entries(groupMap);
+    if (entries.length === 0) {
+      document.getElementById('stockGroupView').innerHTML = '<p class="empty">暂无库存</p>';
+      return;
+    }
+    let html = '<h4>📊 按商品汇总</h4>';
+    html += '<div class="table-wrapper"><table><thead><tr><th>商品</th><th>总剩余库存</th><th>总剩余成本</th><th>平均进价</th></tr></thead><tbody>';
+    entries.forEach(([product, info]) => {
+      const avgPrice = info.totalCost / info.totalQty;
+      html += `<tr><td>${product}</td><td>${info.totalQty}</td><td>¥${info.totalCost.toFixed(2)}</td><td>¥${avgPrice.toFixed(2)}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('stockGroupView').innerHTML = html;
   }
 
   // 利润报表
